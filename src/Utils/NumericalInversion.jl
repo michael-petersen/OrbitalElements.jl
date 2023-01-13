@@ -17,19 +17,18 @@ VERBOSE rules:
 basic Newton-Raphson algorithm to find (a,e) from (Ω₁,Ω₂) brute force derivatives.
 
 """
-@inline function AEFromΩ1Ω2Brute(Ω₁::Float64,Ω₂::Float64,
-                         ψ::Function,
-                         dψ::Function,
-                         d2ψ::Function,
-                         d3ψ::Function,
-                         d4ψ::Function;
+function AEFromΩ1Ω2Brute(Ω₁::Float64,Ω₂::Float64,
+                         ψ::F0,
+                         dψ::F1,
+                         d2ψ::F2,
+                         d3ψ::F3,
+                         d4ψ::F4;
                          eps::Float64=1*10^(-10),
                          ITERMAX::Int64=100,
                          TOLECC::Float64=0.001,TOLA::Float64=0.0001,
                          da::Float64=1.0e-5,de::Float64=1.0e-5,
-                         #VERBOSE::Int64=0,
                          EDGE::Float64=0.03,
-                         NINT::Int64=64)
+                         NINT::Int64=64)::Tuple{Float64,Float64,Int64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
     """
     @IMPROVE add escape for circular orbits
 
@@ -42,7 +41,7 @@ basic Newton-Raphson algorithm to find (a,e) from (Ω₁,Ω₂) brute force deri
     aguess = acirc
     eguess = 0.5
     #f1,f2 = ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,aguess,eguess,NINT=NINT,EDGE=EDGE,TOLECC=TOLECC)
-    f1,f2 = ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,aguess,eguess,false,TOLECC,NINT,EDGE,TOLA)
+    f1,f2 = ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,aguess,eguess,TOLECC,NINT,EDGE,TOLA)
 
     # 2d Newton Raphson inversion and find new increments
     iter = 0
