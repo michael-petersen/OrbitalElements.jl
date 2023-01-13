@@ -3,16 +3,11 @@ basic orbit transformations
 
 """
 
-"""AEfromRpRa
+"""AEFromRpRa
 
 function to translate pericentre and apocentre to semi-major axis and eccentricity
 
 """
-function AEfromRpRa(rp::Float64,ra::Float64)::Tuple{Float64,Float64}
-
-    return (rp+ra)/2,(ra-rp)/(rp+ra)
-end
-
 function AEFromRpRa(rp::Float64,ra::Float64)::Tuple{Float64,Float64}
 
     return (rp+ra)/2,(ra-rp)/(rp+ra)
@@ -55,16 +50,20 @@ end
 """Vrad(ψ,dψ,d2ψd,3ψ,u,a,e[,TOLECC,fun])
 vr, radial velocity for computing action
 as a function of (a,e)
+
+used in action computation
+
+@IMPROVE this still has some allocations associated with it if no @inline.
 """
-@inline function Vrad(ψ::Function,
-              dψ::Function,
-              d2ψ::Function,
-              d3ψ::Function,
+@inline function Vrad(ψ::F0,
+              dψ::F1,
+              d2ψ::F2,
+              d3ψ::F3,
               u::Float64,
               a::Float64,
               e::Float64;
               TOLECC::Float64=ELTOLECC,
-              fun::Function=henon_f)::Float64
+              fun::Function=henon_f)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
     E, L = ELFromAE(ψ,dψ,d2ψ,d3ψ,a,e,TOLECC)
 
@@ -72,7 +71,7 @@ as a function of (a,e)
 
     vrSQ = 2*(E - ψeff(ψ,r,L))
 
-    if vrSQ < 0.0
+    if (vrSQ < 0.0) || isnan(vrSQ) || isinf(vrSQ)
         return 0.0
     else
         return sqrt(vrSQ)
