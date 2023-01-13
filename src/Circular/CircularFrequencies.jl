@@ -153,15 +153,14 @@ end
 Coefficients of the second-order expansion of β = Ω2/Ω1 near a circular orbit
 
 """
-@inline function βcircular2ndorderExpansionCoefs(ψ::Function,
-                                         dψ::Function,
+function βcircular2ndorderExpansionCoefs(dψ::Function,
                                          d2ψ::Function,
                                          d3ψ::Function,
                                          d4ψ::Function,
                                          a::Float64)::Tuple{Float64,Float64,Float64}
 
     # 2nd order Taylor expansion of L
-    L0, L1, L2 = Lcirc2ndorderExpansionCoefs(ψ,dψ,d2ψ,d3ψ,a)
+    L0, _, L2 = Lcirc2ndorderExpansionCoefs(dψ,d3ψ,a)
 
     Ω1c = Ω1circular(dψ,d2ψ,a)
     dψa, d2ψa, d3ψa, d4ψa = dψ(a), d2ψ(a), d3ψ(a), d4ψ(a)
@@ -185,8 +184,7 @@ end
 """βcircular(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e)
 Second-order expansion of β = Ω2/Ω1 near a circular orbit
 """
-@inline function βcircular(ψ::Function,
-                   dψ::Function,
+function βcircular(dψ::Function,
                    d2ψ::Function,
                    d3ψ::Function,
                    d4ψ::Function,
@@ -194,7 +192,7 @@ Second-order expansion of β = Ω2/Ω1 near a circular orbit
                    e::Float64)::Float64
 
     # compute the Taylor expansion of L
-    zeroorder, firstorder, secondorder = βcircular2ndorderExpansionCoefs(ψ,dψ,d2ψ,d3ψ,d4ψ,a)
+    zeroorder, firstorder, secondorder = βcircular2ndorderExpansionCoefs(dψ,d2ψ,d3ψ,d4ψ,a)
     return zeroorder + firstorder * e + secondorder * (e)^(2)
 end
 
@@ -202,8 +200,7 @@ end
 β = Ω2/Ω1 for nearly circular orbits, from Taylor expansion
 EXCLUDING fourth derivative
 """
-function βcircular(ψ::Function,
-                   dψ::Function,
+function βcircular(dψ::Function,
                    d2ψ::Function,
                    d3ψ::Function,
                    a::Float64,
@@ -213,7 +210,7 @@ function βcircular(ψ::Function,
     # define a numerical fourth derivative
     d4ψ(x::Float64) = (d3ψ(x+FDIFF)-d3ψ(x))/FDIFF
 
-    return βcircular(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e)
+    return βcircular(dψ,d2ψ,d3ψ,d4ψ,a,e)
 end
 
 
@@ -253,10 +250,13 @@ perform backwards mapping from Omega_1 for a circular orbit to radius
 can tune [rmin,rmax] for extra optimisation (but not needed)
 @WARNING: important assumption Ω1circular is a decreasing function of radius
 """
-@inline function RcircFromΩ1circ(ω::Float64,
-                         dψ::Function,d2ψ::Function;
-                         rmin::Float64=1.0e-8,rmax::Float64=10000.0,
-                         tolx::Float64=1000.0*eps(Float64),tolf::Float64=1000.0*eps(Float64))::Float64
+function RcircFromΩ1circ(ω::Float64,
+                         dψ::F1,
+                         d2ψ::F2;
+                         rmin::Float64=1.0e-8,
+                         rmax::Float64=10000.0,
+                         tolx::Float64=1000.0*eps(Float64),
+                         tolf::Float64=1000.0*eps(Float64))::Float64 where {F1 <: Function, F2 <: Function}
 
     # check that the input frequency is valid
     if ω  <= 0.
@@ -293,9 +293,10 @@ perform backwards mapping from Omega_2 for a circular orbit to radius
     - d2ψ used for value at 0.
 """
 function RcircFromΩ2circ(ω::Float64,
-                        dψ::Function,
-                        d2ψ;
-                        rmin::Float64=1.0e-8,rmax::Float64=10000.0)::Float64
+                         dψ::F1,
+                         d2ψ::F2;
+                         rmin::Float64=1.0e-8,
+                         rmax::Float64=10000.0)::Float64 where {F1 <: Function, F2 <: Function}
 
     if ω  <= 0.
         error("OrbitalElements.Circular.RcircFromΩ2circ: Negative circular frequency Ω1 = ",ω)
