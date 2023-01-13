@@ -5,6 +5,8 @@ collection of functions that are used to compute quantities when integrating ove
 
 Specific to Henon mapping.
 
+@IMPROVE are any of these helped by function specialisation?
+
 """
 
 ########################################################################
@@ -120,11 +122,13 @@ end
 
 equivalent to Θ = (dr/du)(1/Vrad)
 
+a minimal number of arguments need to be specified here
+
 """
-function ΘAE(ψ::Function,
-             dψ::Function,
-             d2ψ::Function,
-             d3ψ::Function,
+@inline function ΘAE(ψ::F0,
+             dψ::F1,
+             d2ψ::F2,
+             d3ψ::F3,
              u::Float64,
              a::Float64,
              e::Float64;
@@ -134,7 +138,7 @@ function ΘAE(ψ::Function,
              df::Function=henon_df,
              d2f::Function=henon_d2f,
              d3f::Function=henon_d3f,
-             d4f::Function=henon_d4f)::Float64
+             d4f::Function=henon_d4f)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
     # use the expanded approximation
     if ((1-abs(u))<EDGE)
@@ -159,59 +163,29 @@ function ΘAE(ψ::Function,
     end
 end
 
-function ΘAE(ψ::Function,
-             dψ::Function,
-             d2ψ::Function,
-             d3ψ::Function,
-             u::Float64,
-             a::Float64,
-             e::Float64,
-             TOLECC::Float64;
-             EDGE::Float64=0.01,
-             f::Function=henon_f,
-             df::Function=henon_df,
-             d2f::Function=henon_d2f,
-             d3f::Function=henon_d3f,
-             d4f::Function=henon_d4f)::Float64
+"""ΘAE(ψ,dψ,d2ψ,d3ψ,u,a,e[,EDGE,TOLECC,f,df,d2f,d3f,d4f])
 
-    # use the expanded approximation
-    if ((1-abs(u))<EDGE)
-        return ΘExpansionAE(ψ,dψ,d2ψ,d3ψ,u,a,e,TOLECC,f=f,d2f=d2f,d3f=d3f,d4f=d4f)
+Θ, the anomaly for computing orbit averages as a function of (a,e)
 
-    # if not close to the boundary, can calculate as normal
-    else
-        E, L = ELFromAE(ψ,dψ,d2ψ,d3ψ,a,e,TOLECC)
+equivalent to Θ = (dr/du)(1/Vrad)
 
-        r = ru(u,a,e;fun=f)
+a MAXIMAL number of arguments need to be specified here
 
-        # this can somehow be negative: do we need an extra check?
-        denomsq = 2*(E - ψeff(ψ,r,L))
-
-        if denomsq < 0.0
-            # go back to the expansion -- or should we return 0.0?
-            return ΘExpansionAE(ψ,dψ,d2ψ,d3ψ,u,a,e,TOLECC,f=f,d2f=d2f,d3f=d3f,d4f=d4f)
-        end
-
-        # do the standard return
-        return a * e * df(u) / sqrt(denomsq)
-    end
-end
-
-
-@inline function ΘAE(ψ::Function,
-             dψ::Function,
-             d2ψ::Function,
-             d3ψ::Function,
+"""
+@inline function ΘAE(ψ::F0,
+             dψ::F1,
+             d2ψ::F2,
+             d3ψ::F3,
              u::Float64,
              a::Float64,
              e::Float64,
              TOLECC::Float64,
-             EDGE::Float64,
+             EDGE::Float64;
              f::Function=henon_f,
              df::Function=henon_df,
              d2f::Function=henon_d2f,
              d3f::Function=henon_d3f,
-             d4f::Function=henon_d4f)::Float64
+             d4f::Function=henon_d4f)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
     # use the expanded approximation
     if ((1-abs(u))<EDGE)
@@ -250,38 +224,37 @@ BIG ALLOCATIONS here from ELTOLECC not being specified.
 Downside is that this guarantees allocations if TOLECC not specified.
 
 """
-@inline function ΘExpansionAE(ψ::Function,
-                          dψ::Function,
-                          d2ψ::Function,
-                          d3ψ::Function,
-                          u::Float64,
-                          a::Float64,
-                          e::Float64;
-                          TOLECC::Float64=ELTOLECC,
-                          f::Function=henon_f,
-                          df::Function=henon_df,
-                          d2f::Function=henon_d2f,
-                          d3f::Function=henon_d3f,
-                          d4f::Function=henon_d4f)::Float64
+@inline function ΘExpansionAE(ψ::F0,
+                      dψ::F1,
+                      d2ψ::F2,
+                      d3ψ::F3,
+                      u::Float64,
+                      a::Float64,
+                      e::Float64;
+                      TOLECC::Float64=ELTOLECC,
+                      f::Function=henon_f,
+                      df::Function=henon_df,
+                      d2f::Function=henon_d2f,
+                      d3f::Function=henon_d3f,
+                      d4f::Function=henon_d4f)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
 
     return ΘExpansionAE(ψ,dψ,d2ψ,d3ψ,u,a,e,TOLECC,f=f,d2f=d2f,d3f=d3f,d4f=d4f)
 end
 
-
-@inline function ΘExpansionAE(ψ::Function,
-                          dψ::Function,
-                          d2ψ::Function,
-                          d3ψ::Function,
-                          u::Float64,
-                          a::Float64,
-                          e::Float64,
-                          TOLECC::Float64;
-                          f::Function=henon_f,
-                          df::Function=henon_df,
-                          d2f::Function=henon_d2f,
-                          d3f::Function=henon_d3f,
-                          d4f::Function=henon_d4f)::Float64
+@inline function ΘExpansionAE(ψ::F0,
+                      dψ::F1,
+                      d2ψ::F2,
+                      d3ψ::F3,
+                      u::Float64,
+                      a::Float64,
+                      e::Float64,
+                      TOLECC::Float64;
+                      f::Function=henon_f,
+                      df::Function=henon_df,
+                      d2f::Function=henon_d2f,
+                      d3f::Function=henon_d3f,
+                      d4f::Function=henon_d4f)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
     # which boundary are we close to?
     ul = (u > 0) ? 1.0 : -1.0
@@ -290,7 +263,6 @@ end
     rl = ru(ul,a,e,fun=f)
 
     # compute energy and angular momentum from the potential (allow for expansions)
-    #E, L = ELFromAE(ψ,dψ,d2ψ,d3ψ,a,e;TOLECC=TOLECC)
     E, L = ELFromAE(ψ,dψ,d2ψ,d3ψ,a,e,TOLECC)
 
     # compute the derivatives of the effective potential
@@ -317,7 +289,7 @@ end
 
     zeroorder   = d2fl
     firstorder  = d3fl / 3.0
-    secondorder = (3.0 * (dψeffl * d2fl * d4fl - a * e * d2ψeffl * (d2fl)^(3)) -  dψeffl * (d3fl)^(2)) / (24 * dψeffl * d2fl)
+    secondorder = (3.0 * (dψeffl * d2fl * d4fl - a * e * d2ψeffl * (d2fl)^(3)) -  dψeffl * (d3fl)^(2)) / (24.0 * dψeffl * d2fl)
 
     return pref / denom * ( zeroorder + firstorder * (u - ul) + secondorder * (u - ul)^(2) )
 end
@@ -333,23 +305,25 @@ end
 """ΘAEdade(ψ,dψ,d2ψ,d3ψ,u,a,e[,EDGE,TOLECC,f,df,d2f,d3f,d4f,da,de])
 
 numerical differentiation of Θ w.r.t. semimajor axis and eccentricity
+
+
 """
-function ΘAEdade(ψ::Function,
-                     dψ::Function,
-                     d2ψ::Function,
-                     d3ψ::Function,
-                     u::Float64,
-                     a::Float64,
-                     e::Float64;
-                     EDGE::Float64=0.01,
-                     TOLECC::Float64=ELTOLECC,
-                     f::Function=henon_f,
-                     df::Function=henon_df,
-                     d2f::Function=henon_d2f,
-                     d3f::Function=henon_d3f,
-                     d4f::Function=henon_d4f,
-                     da::Float64=1.0e-8,
-                     de::Float64=1.0e-8)::Float64
+function ΘAEdade(ψ::F0,
+                 dψ::F1,
+                 d2ψ::F2,
+                 d3ψ::F3,
+                 u::Float64,
+                 a::Float64,
+                 e::Float64;
+                 EDGE::Float64=0.01,
+                 TOLECC::Float64=ELTOLECC,
+                 f::Function=henon_f,
+                 df::Function=henon_df,
+                 d2f::Function=henon_d2f,
+                 d3f::Function=henon_d3f,
+                 d4f::Function=henon_d4f,
+                 da::Float64=1.0e-8,
+                 de::Float64=1.0e-8)::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
     # derivative w.r.t. semimajor axis: always safe
     thHa = ΘAE(ψ,dψ,d2ψ,d3ψ,u,a+da,e,EDGE=EDGE,TOLECC=TOLECC,f=f,df=df,d2f=d2f,d3f=d3f,d4f=d4f)
@@ -363,7 +337,7 @@ function ΘAEdade(ψ::Function,
     end
 
     thHe = ΘAE(ψ,dψ,d2ψ,d3ψ,u,a,e+de,EDGE=EDGE,TOLECC=TOLECC,f=f,df=df,d2f=d2f,d3f=d3f,d4f=d4f)
-    thLe = ΘAE(ψ,dψ,d2ψ,d3ψ,u,a,e   ,EDGE=EDGE,TOLECC=TOLECC,f=f,df=df,d2f=d2f,d3f=d3f,d4f=d4f)
+    thLe = thLa # use the equivalency of the cross terms
     dΘde = (thHe-thLe)/de
 
     return dΘda,dΘde
@@ -372,23 +346,24 @@ end
 
 """
 fast version, requiring extra parameters
+
 """
-@inline function ΘAEdade(ψ::Function,
-                     dψ::Function,
-                     d2ψ::Function,
-                     d3ψ::Function,
-                     u::Float64,
-                     a::Float64,
-                     e::Float64,
-                     EDGE::Float64,
-                     TOLECC::Float64,
-                     da::Float64,
-                     de::Float64;
-                     f::Function=henon_f,
-                     df::Function=henon_df,
-                     d2f::Function=henon_d2f,
-                     d3f::Function=henon_d3f,
-                     d4f::Function=henon_d4f)
+function ΘAEdade(ψ::F0,
+                 dψ::F1,
+                 d2ψ::F2,
+                 d3ψ::F3,
+                 u::Float64,
+                 a::Float64,
+                 e::Float64,
+                 EDGE::Float64,
+                 TOLECC::Float64,
+                 da::Float64,
+                 de::Float64;
+                 f::Function=henon_f,
+                 df::Function=henon_df,
+                 d2f::Function=henon_d2f,
+                 d3f::Function=henon_d3f,
+                 d4f::Function=henon_d4f)::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
     # derivative w.r.t. semimajor axis: always safe
     thHa = ΘAE(ψ,dψ,d2ψ,d3ψ,u,a+da,e,TOLECC,EDGE,f=f,df=df,d2f=d2f,d3f=d3f,d4f=d4f)
@@ -402,7 +377,7 @@ fast version, requiring extra parameters
     end
 
     thHe = ΘAE(ψ,dψ,d2ψ,d3ψ,u,a,e+de,TOLECC,EDGE,f=f,df=df,d2f=d2f,d3f=d3f,d4f=d4f)
-    thLe = ΘAE(ψ,dψ,d2ψ,d3ψ,u,a,e   ,TOLECC,EDGE,f=f,df=df,d2f=d2f,d3f=d3f,d4f=d4f)
+    thLe = thLa
     dΘde = (thHe-thLe)/de
 
     return dΘda,dΘde

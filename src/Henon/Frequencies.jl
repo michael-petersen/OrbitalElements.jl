@@ -1,21 +1,21 @@
 
 
-"""HenonΘFrequenciesAE(ψ,dψ,d2ψ,d3ψ,a,e,[,action=false,NINT=32,EDGE=0.03,TOLECC=0.001])
+"""HenonΘFrequenciesAE(ψ,dψ,d2ψ,d3ψ,a,e,TOLECC,NINT,EDGE)
 
 use the defined function Θ(u) to compute frequency integrals
 
 this is the fast version, without action computation, and more parameters specified
 """
-@inline function HenonΘFrequenciesAE(ψ::Function,
-                                 dψ::Function,
-                                 d2ψ::Function,
-                                 d3ψ::Function,
-                                 d4ψ::Function,
-                                 a::Float64,
-                                 e::Float64,
-                                 TOLECC::Float64,
-                                 NINT::Int64,
-                                 EDGE::Float64)::Tuple{Float64,Float64}
+function HenonΘFrequenciesAE(ψ::F0,
+                             dψ::F1,
+                             d2ψ::F2,
+                             d3ψ::F3,
+                             d4ψ::F4,
+                             a::Float64,
+                             e::Float64,
+                             TOLECC::Float64,
+                             NINT::Int64,
+                             EDGE::Float64)::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
     if e<TOLECC
 
@@ -70,17 +70,16 @@ end
 """
 for use when computing the radial action
 """
-function HenonΘJFrequenciesAE(ψ::Function,
-                                 dψ::Function,
-                                 d2ψ::Function,
-                                 d3ψ::Function,
-                                 d4ψ::Function,
-                                 a::Float64,
-                                 e::Float64;
-                                 action::Bool=false,
-                                 NINT::Int64=32,
-                                 EDGE::Float64=0.03,
-                                 TOLECC::Float64=ELTOLECC)::Tuple{Float64,Float64,Float64}
+function HenonΘJFrequenciesAE(ψ::F0,
+                              dψ::F1,
+                              d2ψ::F2,
+                              d3ψ::F3,
+                              d4ψ::F4,
+                              a::Float64,
+                              e::Float64;
+                              NINT::Int64=32,
+                              EDGE::Float64=0.03,
+                              TOLECC::Float64=ELTOLECC)::Tuple{Float64,Float64,Float64} where {F0  <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
     if e<TOLECC
 
@@ -91,14 +90,10 @@ function HenonΘJFrequenciesAE(ψ::Function,
         β  = βcircular(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e) # = Ω2/Ω1
         Ω2 = β*Ω1
 
-        if action
-            u1func(u::Float64)::Float64 = drdu(u,a,e)*Vrad(ψ,dψ,d2ψ,d3ψ,u,a,e)
-            accum = UnitarySimpsonIntegration(u1func,NINT)
-            actionj   = (1/pi)*accum
-            return Ω1,Ω2,actionj
-        else
-            return Ω1,Ω2
-        end
+        u1func(u::Float64)::Float64 = drdu(u,a,e)*Vrad(ψ,dψ,d2ψ,d3ψ,u,a,e)
+        accum = UnitarySimpsonIntegration(u1func,NINT)
+        actionj   = (1/pi)*accum
+        return Ω1,Ω2,actionj
 
     else
 
@@ -134,11 +129,7 @@ function HenonΘJFrequenciesAE(ψ::Function,
             Ω2 = LFromAE(ψ,dψ,d2ψ,d3ψ,a,e)*accum[2]*(1/pi)*Ω1
         end
 
-        if action
-            return Ω1,Ω2,actionj
-        else
-            return Ω1,Ω2
-        end
+        return Ω1,Ω2,actionj
 
     end # switches for orbits who are too radial or circular
 
@@ -149,18 +140,18 @@ end
 use the defined function Θ(u) to compute frequency integrals
 AND DERIVATIVES
 """
-function DHenonΘFrequenciesAE(ψ::Function,
-                              dψ::Function,
-                              d2ψ::Function,
-                              d3ψ::Function,
-                              d4ψ::Function,
+function DHenonΘFrequenciesAE(ψ::F0,
+                              dψ::F1,
+                              d2ψ::F2,
+                              d3ψ::F3,
+                              d4ψ::F4,
                               a::Float64,
                               e::Float64;
                               da::Float64=1.0e-6,
                               de::Float64=1.0e-6,
                               NINT::Int64=32,
                               EDGE::Float64=0.01,
-                              TOLECC::Float64=0.001)
+                              TOLECC::Float64=0.001)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0  <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
     # if nearly circular, use the epicyclic approximation
     if e<TOLECC
@@ -199,9 +190,8 @@ function DHenonΘFrequenciesAE(ψ::Function,
             # 7. Θ(u)/r^3(u)
             # 8. dΘ(u)/de/r(u)^2
 
-            #th = ΘAE(ψ,dψ,d2ψ,d3ψ,u,a,e,EDGE=EDGE)
+            # compute theta and the theta derivatives
             th = ΘAE(ψ,dψ,d2ψ,d3ψ,u,a,e,ELTOLECC,EDGE)
-            #dthda,dthde = ΘAEdade(ψ,dψ,d2ψ,d3ψ,u,a,e,EDGE=EDGE,da=da,de=de)
             dthda,dthde = ΘAEdade(ψ,dψ,d2ψ,d3ψ,u,a,e,ELTOLECC,EDGE,da,de)
 
             r = ru(u,a,e)
@@ -255,11 +245,11 @@ end
 """DHenonΘFreqRatiosAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,[da,de,action=false,NINT=32,EDGE=0.03,TOLECC=0.001,Ω₀=1.0])
 returning α,β and derivatives w.r.t. (a,e) using DHenonΘFrequenciesAE
 """
-function DHenonΘFreqRatiosAE(ψ::Function,
-                             dψ::Function,
-                             d2ψ::Function,
-                             d3ψ::Function,
-                             d4ψ::Function,
+function DHenonΘFreqRatiosAE(ψ::F0,
+                             dψ::F1,
+                             d2ψ::F2,
+                             d3ψ::F3,
+                             d4ψ::F4,
                              a::Float64,
                              e::Float64;
                              da::Float64=1.0e-6,
@@ -267,7 +257,7 @@ function DHenonΘFreqRatiosAE(ψ::Function,
                              NINT::Int64=32,
                              EDGE::Float64=0.01,
                              TOLECC::Float64=0.001,
-                             Ω₀::Float64=1.0)
+                             Ω₀::Float64=1.0)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0  <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
     # Frenquency computatio (with derivatives)
     #Ω1,Ω2,∂Ω1∂a,∂Ω1∂e,∂Ω2∂a,∂Ω2∂e = DHenonΘFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e;da=da,de=de,NINT=NINT,EDGE=EDGE,TOLECC=TOLECC)
@@ -286,13 +276,15 @@ function DHenonΘFreqRatiosAE(ψ::Function,
     return α,β,∂α∂a,∂α∂e,∂β∂a,∂β∂e
 end
 
-function HenonJFromAE(ψ::Function,
-                      dψ::Function,
-                      d2ψ::Function,
-                      d3ψ::Function,
+"""simple wrapper to compute action alone
+"""
+function HenonJFromAE(ψ::F0,
+                      dψ::F1,
+                      d2ψ::F2,
+                      d3ψ::F3,
                       a::Float64,
                       e::Float64;
-                      NINT::Int64=32)
+                      NINT::Int64=32)::Float64 where {F0  <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
     u1func(u::Float64)::Float64 = drdu(u,a,e)*Vrad(ψ,dψ,d2ψ,d3ψ,u,a,e)
 

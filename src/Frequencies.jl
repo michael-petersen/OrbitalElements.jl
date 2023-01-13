@@ -80,7 +80,7 @@ function ComputeFrequenciesAE(ψ::F0,
     # define a numerical fourth derivative
     @inline d4ψ(x::Float64) = (d3ψ(x+FDIFF)-d3ψ(x))/FDIFF
 
-    return ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,action,TOLECC,NINT,EDGE,TOLA)
+    return ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLECC,NINT,EDGE,TOLA)
 end
 
 """ComputeFrequenciesAE(ψ,dψ,d2ψ,a,e[,TOLECC,VERBOSE])
@@ -102,7 +102,7 @@ function ComputeFrequenciesAE(ψ::F0,
     # Nul fourth derivative
     @inline d4ψ(x::Float64) = 0.
 
-    return ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,action,TOLECC,NINT,EDGE,TOLA)
+    return ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLECC,NINT,EDGE,TOLA)
 end
 
 
