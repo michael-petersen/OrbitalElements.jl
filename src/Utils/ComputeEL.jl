@@ -117,6 +117,7 @@ end
 #
 ########################################################################
 
+"""return energy for an exactly radial orbit"""
 function Erad(ψ::Function,
               a::Float64)::Float64
 
@@ -132,12 +133,12 @@ end
 """
 Second-order expansion of energy equation near a circular orbit
 """
-function EcircExpansion(ψ::Function,
-                        dψ::Function,
-                        d2ψ::Function,
-                        d3ψ::Function,
+function EcircExpansion(ψ::F0,
+                        dψ::F1,
+                        d2ψ::F2,
+                        d3ψ::F3,
                         a::Float64,
-                        e::Float64)::Float64
+                        e::Float64)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
     # compute the Taylor expansion of E
     return (0.5*a*dψ(a) + ψ(a)) + (0.5*a*dψ(a) + 0.5*(a)^(2)*d2ψ(a) + (a)^(3)*d3ψ(a)/12) * (e)^(2)
@@ -146,11 +147,10 @@ end
 """
 Coefficients of the second-order expansion of angular momentum equation near a circular orbit
 """
-@inline function Lcirc2ndorderExpansionCoefs(ψ::Function,
-                            dψ::Function,
-                            d2ψ::Function,
-                            d3ψ::Function,
-                            a::Float64)::Tuple{Float64,Float64,Float64}
+#@inline function Lcirc2ndorderExpansionCoefs(dψ::F1,
+function Lcirc2ndorderExpansionCoefs(dψ::F1,
+                                     d3ψ::F3,
+                                     a::Float64)::Tuple{Float64,Float64,Float64} where {F1 <: Function, F3 <: Function}
 
     Lcirc = (sqrt(a))^(3)*sqrt(dψ(a))
     return Lcirc, 0., ((a)^(5)*d3ψ(a)/(12*Lcirc) - Lcirc)
@@ -167,7 +167,7 @@ function LcircExpansion(ψ::Function,
                         e::Float64)::Float64
 
     # compute the Taylor expansion of L
-    zeroorder, firstorder, secondorder = Lcirc2ndorderExpansionCoefs(ψ,dψ,d2ψ,d3ψ,a)
+    zeroorder, firstorder, secondorder = Lcirc2ndorderExpansionCoefs(dψ,d3ψ,a)
     return zeroorder + firstorder * e + secondorder * (e)^(2)
 end
 

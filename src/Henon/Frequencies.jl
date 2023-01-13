@@ -23,7 +23,7 @@ function HenonΘFrequenciesAE(ψ::F0,
 
         # drop into circular frequency expansion calculations:
         Ω1 = Ω1circular(dψ,d2ψ,d3ψ,d4ψ,a,e)
-        β  = βcircular(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e) # = Ω2/Ω1
+        β  = βcircular(dψ,d2ψ,d3ψ,d4ψ,a,e) # = Ω2/Ω1
         Ω2 = β*Ω1
 
         return Ω1,Ω2
@@ -87,7 +87,7 @@ function HenonΘJFrequenciesAE(ψ::F0,
 
         # drop into circular frequency expansion calculations:
         Ω1 = Ω1circular(dψ,d2ψ,d3ψ,d4ψ,a,e)
-        β  = βcircular(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e) # = Ω2/Ω1
+        β  = βcircular(dψ,d2ψ,d3ψ,d4ψ,a,e) # = Ω2/Ω1
         Ω2 = β*Ω1
 
         u1func(u::Float64)::Float64 = drdu(u,a,e)*Vrad(ψ,dψ,d2ψ,d3ψ,u,a,e)
@@ -158,7 +158,7 @@ function DHenonΘFrequenciesAE(ψ::F0,
 
         # drop into circular frequency expansion calculations:
         Ω1 = Ω1circular(dψ,d2ψ,d3ψ,d4ψ,a,e)
-        β  = βcircular(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e) # = Ω2/Ω1
+        β  = βcircular(dψ,d2ψ,d3ψ,d4ψ,a,e) # = Ω2/Ω1
         Ω2 = β*Ω1
 
         Ω1plusa = Ω1circular(dψ,d2ψ,d3ψ,d4ψ,a+da,e)
@@ -167,8 +167,8 @@ function DHenonΘFrequenciesAE(ψ::F0,
         ∂Ω1∂a = (Ω1plusa - Ω1)/da
         ∂Ω1∂e = (Ω1pluse - Ω1)/de
 
-        ∂Ω2∂a = (Ω1plusa*βcircular(ψ,dψ,d2ψ,d3ψ,d4ψ,a+da,e) - Ω2)/da
-        ∂Ω2∂e = (Ω1pluse*βcircular(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e+de) - Ω2)/de
+        ∂Ω2∂a = (Ω1plusa*βcircular(dψ,d2ψ,d3ψ,d4ψ,a+da,e) - Ω2)/da
+        ∂Ω2∂e = (Ω1pluse*βcircular(dψ,d2ψ,d3ψ,d4ψ,a,e+de) - Ω2)/de
 
         return Ω1,Ω2,∂Ω1∂a,∂Ω1∂e,∂Ω2∂a,∂Ω2∂e
 

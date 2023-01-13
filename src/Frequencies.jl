@@ -75,7 +75,8 @@ function ComputeFrequenciesAE(ψ::F0,
                               TOLECC::Float64=0.001,
                               NINT::Int64=32,
                               EDGE::Float64=0.01,
-                              FDIFF::Float64=1.e-8)::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
+                              FDIFF::Float64=1.e-8,
+                              TOLA::Float64=0.001)::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
     # define a numerical fourth derivative
     @inline d4ψ(x::Float64) = (d3ψ(x+FDIFF)-d3ψ(x))/FDIFF
@@ -94,7 +95,8 @@ function ComputeFrequenciesAE(ψ::F0,
                               TOLECC::Float64=0.001,
                               NINT::Int64=32,
                               EDGE::Float64=0.01,
-                              FDIFF::Float64=1.e-8)::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function}
+                              FDIFF::Float64=1.e-8,
+                              TOLA::Float64=0.001)::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function}
 
     # define a numerical third derivative
     @inline d3ψ(x::Float64) = (d2ψ(x+FDIFF)-d2ψ(x))/FDIFF
