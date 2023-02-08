@@ -12,6 +12,7 @@ include("Utils/Extremise.jl")
 include("Utils/IO.jl")
 include("Utils/OrbitDefinitions.jl")
 include("Utils/Integrators.jl")
+include("Utils/ParameterStructure.jl")
 
 # bring in the test potentials (not strictly needed)
 include("Potentials/isochrone.jl")
