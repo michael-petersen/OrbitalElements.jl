@@ -7,8 +7,45 @@ Strategies:
 -include Jacobian to transform between (E,L) and (a,e)
 -auxiliary functions to do same calculations as a function of (rp,ra)
 
+functions:
+EccentricityTolerance(a,TOLA,TOLECC)
+EFromAE(ψ,dψ,d2ψ,d3ψ,a,e,TOLA,TOLECC)
+LFromAE(ψ,dψ,d2ψ,d3ψ,a,e,TOLA,TOLECC)
+ELFromAE(ψ,dψ,d2ψ,d3ψ,a,e,TOLA,TOLECC)
+Erad(ψ,a)
+Ecirc(ψ,dψ,a,e)
+EcircExpansion(ψ,dψ,d2ψ,d3ψ,a,e)
+Lcirc(dψ,a)
+Lcirc2ndorderExpansionCoefs(dψ,d3ψ,a)
+LcircExpansion(ψ,dψ,d2ψ,d3ψ,a,e)
+dELFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLA,TOLECC)
+dELcircExpansion(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e)
+JacELToAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLA,TOLECC)
+EFromRpRa(ψ,dψ,d2ψ,d3ψ,rp,ra,TOLA,TOLECC)
+LFromRpRa(ψ,dψ,d2ψ,d3ψ,rp,ra,TOLA,TOLECC)
+ELFromRpRa(ψ,dψ,d2ψ,d3ψ,rp,ra,TOLA,TOLECC)
+
 """
 
+########################################################################
+ #
+ # Eccentricity tolerance as a function of semi-major axis
+ #
+ ########################################################################
+ """
+    EccentricityTolerance(a,TOLA,TOLECC)
+
+ tweak eccentricity tolerance to semi-major axis
+ """
+ function EccentricityTolerance(a::Float64,TOLA::Float64,TOLECC::Float64)::Float64
+
+     # We effectively want to switch at
+     # a*e > TOLA * TOLECC
+     # i.e. tole = TOLA * TOLECC / a
+     # + constraint eccentricity tolerance to be in [TOLECC,1/2]
+     return min(0.5, max(TOLECC, TOLA*TOLECC/a))
+     # return TOLECC
+ end
 
 ########################################################################
 #
@@ -17,18 +54,16 @@ Strategies:
 ########################################################################
 
 """
-energy as a function of (a,e) for a given potential ψ (and its derivatives)
-INCLUDING third derivative of the potential
-"""
-function EFromAE(ψ::F0,
-                 dψ::F1,
-                 d2ψ::F2,
-                 d3ψ::F3,
-                 a::Float64,
-                 e::Float64;
-                 TOLECC::Float64=ELTOLECC)::Float64 where {F0  <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
+    EFromAE(ψ,dψ,d2ψ,d3ψ,a,e,TOLA,TOLECC)
 
-    if e<TOLECC
+energy as a function of (a,e) for a given potential ψ (and its derivatives)
+"""
+function EFromAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
+                 a::Float64,e::Float64,
+                 TOLA::Float64=ELTOLECC,TOLECC::Float64=ELTOLECC)::Float64 where {F0  <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
+
+    tole = EccentricityTolerance(a,TOLA,TOLECC)
+    if e <= tole
         # switch to the expanded case
         return EcircExpansion(ψ,dψ,d2ψ,d3ψ,a,e)
     elseif (e == 1.) # up to numerical precision
@@ -40,17 +75,16 @@ function EFromAE(ψ::F0,
 end
 
 """
+    LFromAE(ψ,dψ,d2ψ,d3ψ,a,e,TOLA,TOLECC)
+
 angular momentum as a function of (a,e) for a given potenial ψ (and its derivatives)
 """
-function LFromAE(ψ::F0,
-                 dψ::F1,
-                 d2ψ::F2,
-                 d3ψ::F3,
-                 a::Float64,
-                 e::Float64;
-                 TOLECC::Float64=ELTOLECC)::Float64 where {F0  <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
+function LFromAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
+                 a::Float64,e::Float64,
+                 TOLA::Float64=ELTOLECC,TOLECC::Float64=ELTOLECC)::Float64 where {F0  <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
-    if e<TOLECC
+    tole = EccentricityTolerance(a,TOLA,TOLECC)
+    if e <= tole
         # switch to the expanded case
         return LcircExpansion(ψ,dψ,d2ψ,d3ψ,a,e)
     elseif (e == 1.) # up to numerical precision
@@ -62,19 +96,17 @@ function LFromAE(ψ::F0,
 end
 
 """
+    ELFromAE(ψ,dψ,d2ψ,d3ψ,a,e,TOLA,TOLECC)
+
 combined energy + angular momentum as a function of (a,e) for a given potenial ψ (and its derivatives)
 """
-function ELFromAE(ψ::F0,
-                  dψ::F1,
-                  d2ψ::F2,
-                  d3ψ::F3,
-                  a::Float64,
-                  e::Float64;
-                  TOLECC::Float64=ELTOLECC)::Tuple{Float64,Float64} where {F0  <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
+function ELFromAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
+                  a::Float64,e::Float64,
+                  TOLA::Float64=ELTOLECC,TOLECC::Float64=ELTOLECC)::Tuple{Float64,Float64} where {F0  <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
-    # make a switch for e=0.0 exactly?
 
-    if e<TOLECC
+    tole = EccentricityTolerance(a,TOLA,TOLECC)
+    if e <= tole
         # switch to the expanded case
         return EcircExpansion(ψ,dψ,d2ψ,d3ψ,a,e),LcircExpansion(ψ,dψ,d2ψ,d3ψ,a,e)
     elseif (e == 1.) # up to numerical precision
@@ -86,29 +118,6 @@ function ELFromAE(ψ::F0,
 
     #return E, L
 end
-
-# make a definition with TOLECC specified, for speed
-function ELFromAE(ψ::F0,
-                  dψ::F1,
-                  d2ψ::F2,
-                  d3ψ::F3,
-                  a::Float64,
-                  e::Float64,
-                  TOLECC::Float64)::Tuple{Float64,Float64} where {F0  <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
-
-    if e<TOLECC
-        # switch to the expanded case
-        return EcircExpansion(ψ,dψ,d2ψ,d3ψ,a,e),LcircExpansion(ψ,dψ,d2ψ,d3ψ,a,e)
-    elseif (e == 1.) # up to numerical precision
-        return Erad(ψ,a),0.0
-    else
-        # the analytic version of the angular momentum
-        return ((1+e)^(2)*ψ(a*(1+e)) - (1-e)^(2)*ψ(a*(1-e))) / (4e),a * (1-(e)^(2)) * sqrt( (ψ(a*(1+e)) - ψ(a*(1-e))) / (2e) )
-    end
-
-    #return E, L
-end
-
 
 ########################################################################
 #
@@ -116,7 +125,11 @@ end
 #
 ########################################################################
 
-"""return energy for an exactly radial orbit"""
+"""
+    Erad(ψ,a)
+
+return energy for an exactly radial orbit
+"""
 function Erad(ψ::Function,
               a::Float64)::Float64
 
@@ -130,10 +143,11 @@ end
 ########################################################################
 
 """
-exactly circular orbit
+    Ecirc(ψ,dψ,a,e)
+
+energy for an exactly circular orbit
 """
-function Ecirc(ψ::F0,
-               dψ::F1,
+function Ecirc(ψ::F0,dψ::F1,
                a::Float64,
                e::Float64)::Float64 where {F0 <: Function, F1 <: Function}
 
@@ -142,23 +156,24 @@ function Ecirc(ψ::F0,
 
 end
 
+
 """
-Second-order expansion of energy equation near a circular orbit
+    EcircExpansion(ψ,dψ,d2ψ,d3ψ,a,e)
+
+second-order expansion of energy equation near a circular orbit
 """
-function EcircExpansion(ψ::F0,
-                        dψ::F1,
-                        d2ψ::F2,
-                        d3ψ::F3,
-                        a::Float64,
-                        e::Float64)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
+function EcircExpansion(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
+                        a::Float64,e::Float64)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
     # compute the Taylor expansion of E
     return (0.5*a*dψ(a) + ψ(a)) + (0.5*a*dψ(a) + 0.5*(a)^(2)*d2ψ(a) + (a)^(3)*d3ψ(a)/12) * (e)^(2)
 end
 
 """
- Circular orbit L value
- """
+    Lcirc(dψ,a)
+
+Circular orbit L value
+"""
 function Lcirc(dψ::Function,
                a::Float64)::Float64
 
@@ -166,26 +181,25 @@ function Lcirc(dψ::Function,
  end
 
 """
-Coefficients of the second-order expansion of angular momentum equation near a circular orbit
+    Lcirc2ndorderExpansionCoefs(dψ,d3ψ,a)
+
+coefficients of the second-order expansion of angular momentum equation near a circular orbit
 """
 #@inline function Lcirc2ndorderExpansionCoefs(dψ::F1,
-function Lcirc2ndorderExpansionCoefs(dψ::F1,
-                                     d3ψ::F3,
+function Lcirc2ndorderExpansionCoefs(dψ::F1,d3ψ::F3,
                                      a::Float64)::Tuple{Float64,Float64,Float64} where {F1 <: Function, F3 <: Function}
 
-    Lcirc = (sqrt(a))^(3)*sqrt(dψ(a))
+    Lcirc = Lcirc(dψ,a)
     return Lcirc, 0., ((a)^(5)*d3ψ(a)/(12*Lcirc) - Lcirc)
 end
 
 """
-Second-order expansion of angular momentum equation near a circular orbit
+    LcircExpansion(ψ,dψ,d2ψ,d3ψ,a,e)
+
+second-order expansion of angular momentum equation near a circular orbit
 """
-function LcircExpansion(ψ::F0,
-                        dψ::F1,
-                        d2ψ::F2,
-                        d3ψ::F3,
-                        a::Float64,
-                        e::Float64)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
+function LcircExpansion(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
+                        a::Float64,e::Float64)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
     # compute the Taylor expansion of L
     zeroorder, firstorder, secondorder = Lcirc2ndorderExpansionCoefs(dψ,d3ψ,a)
@@ -193,30 +207,22 @@ function LcircExpansion(ψ::F0,
 end
 
 
-########################################################################
-#
-# (a,e) -> (E,L) mapping : derivatives, generic case
-#
-########################################################################
-
 """
+    dELFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLA,TOLECC)
+
 energy and angular momentum derivatives w.r.t. (a,e)
 """
-function dELFromAE(ψ::F0,
-                   dψ::F1,
-                   d2ψ::F2,
-                   d3ψ::F3,
-                   d4ψ::F4,
-                   a::Float64,
-                   e::Float64;
-                   TOLECC::Float64=ELTOLECC)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
+function dELFromAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
+                   a::Float64,e::Float64,
+                   TOLA::Float64=ELTOLECC,TOLECC::Float64=ELTOLECC)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
-    E, L = ELFromAE(ψ,dψ,d2ψ,d3ψ,a,e;TOLECC=TOLECC)
+    E, L = ELFromAE(ψ,dψ,d2ψ,d3ψ,a,e,TOLA,TOLECC)
 
-    if e<TOLECC
+    tole = EccentricityTolerance(a,TOLA,TOLECC)
+    if e <= tole
         # switch to the expanded case
-        ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e = dELcircExpansion(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e)
-        return E, L, ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e
+        ∂E∂a, ∂L∂a, ∂E∂e, ∂L∂e = dELcircExpansion(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e)
+        return E, L, ∂E∂a, ∂L∂a, ∂E∂e, ∂L∂e
 
     else
 
@@ -231,8 +237,8 @@ function dELFromAE(ψ::F0,
 
         # apply the brakes if there is a problem!
         if (dLdenom == 0.) || isnan(dLdenom) || isinf(dLdenom)
-            ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e = dELcircExpansion(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e)
-            return E, L, ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e
+            ∂E∂a, ∂L∂a, ∂E∂e, ∂L∂e = dELcircExpansion(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e)
+            return E, L, ∂E∂a, ∂L∂a, ∂E∂e, ∂L∂e
         end
 
         ∂E∂a = ((1+e)^(3)*dψra - (1-e)^(3)*dψrp) / (4e)
@@ -243,70 +249,18 @@ function dELFromAE(ψ::F0,
         ∂L∂a = (1-(e)^(2)) * (2*ψdiff + ra*dψra - rp*dψrp)  / (dLdenom)
         ∂L∂e = - a * ((1+3*(e)^(2))*ψdiff - a*e*(1-(e)^(2))*(dψra + dψrp)) / (e*dLdenom)
 
-        return E, L, ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e
+        return E, L, ∂E∂a, ∂L∂a, ∂E∂e, ∂L∂e
     end
 end
 
-"""
-energy and angular momentum derivatives w.r.t. (a,e)
-EXCLUDING fourth derivative
-"""
-function dELFromAE(ψ::F0,
-                   dψ::F1,
-                   d2ψ::F2,
-                   d3ψ::F3,
-                   a::Float64,
-                   e::Float64;
-                   TOLECC::Float64=ELTOLECC,
-                   FDIFF::Float64=1.e-8)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
-   # define a numerical fourth derivative
-   d4ψ(x::Float64) = (d3ψ(x+FDIFF)-d3ψ(x))/FDIFF
-
-    E, L, ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e = dELFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLECC=ELTOLECC)
-
-    return E, L, ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e
-end
 
 """
-energy and angular momentum derivatives w.r.t. (a,e)
-EXCLUDING third derivative
-"""
-function dELFromAE(ψ::F0,
-                   dψ::F1,
-                   d2ψ::F2,
-                   a::Float64,
-                   e::Float64;
-                   TOLECC::Float64=ELTOLECC,
-                   FDIFF::Float64=1.e-8)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function}
+    dELcircExpansion(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e)
 
-   # define a numerical third derivative
-   d3ψ(x::Float64) = (d2ψ(x+FDIFF)-d2ψ(x))/FDIFF
-
-   # zero out fourth derivative
-   d4ψ(x::Float64) = 0.
-
-    E, L, ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e = dELFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLECC=ELTOLECC)
-
-    return E, L, ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e
-end
-
-
-########################################################################
-#
-# (a,e) -> (E,L) mapping : derivatives, circular Taylor expansions
-#
-########################################################################
-
-"""
 Second-order of energy and angular momentum derivatives w.r.t. (a,e) near circular orbits.
 """
-function dELcircExpansion(ψ::F0,
-                          dψ::F1,
-                          d2ψ::F2,
-                          d3ψ::F3,
-                          d4ψ::F4,
-                          a::Float64,
-                          e::Float64)::Tuple{Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
+function dELcircExpansion(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
+                          a::Float64,e::Float64)::Tuple{Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
     # compute all potential and derivative values
     ψa, dψa, ddψa, dddψa, ddddψa = ψ(a), dψ(a), d2ψ(a), d3ψ(a), d4ψ(a)
@@ -322,95 +276,33 @@ function dELcircExpansion(ψ::F0,
     ∂L∂a = 0.5*(3*sqrt(a)*sqdψa + (sqa)^(3)*ddψa/sqdψa) - 0.5 * sqa * (3*(dψa)^(2) + a*dψa*ddψa - 7*(a)^(2)*dψa*dddψa/12 + (a)^(3)*(ddψa*dddψa - 2*dψa*ddddψa)/12) / ((sqdψa)^(3)) * (e)^(2)
     ∂L∂e = (sqa)^(3) * ((a)^(2)*dddψa/(6*sqdψa) - 2*sqdψa) * e
 
-    return ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e
+    return ∂E∂a, ∂L∂a, ∂E∂e, ∂L∂e
 end
 
 
-########################################################################
-#
-# (a,e) -> (E,L) mapping : Jacobian, generic case
-#
-########################################################################
 
 """
+    JacELToAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLA,TOLECC)
+
 the Jacobian to convert between variables that are functions of (E,L) and (a,e)
 """
-function JacELToAE(ψ::F0,
-                   dψ::F1,
-                   d2ψ::F2,
-                   d3ψ::F3,
-                   d4ψ::F4,
-                   a::Float64,
-                   e::Float64;
-                   TOLECC::Float64=ELTOLECC)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
+function JacELToAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
+                   a::Float64,e::Float64,
+                   TOLA::Float64,TOLECC::Float64=ELTOLECC)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
 
-    E, L, ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e = dELFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLECC=TOLECC)
+    _, _, ∂E∂a, ∂L∂a, ∂E∂e, ∂L∂e = dELFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLA,TOLECC)
 
     return abs(∂E∂a*∂L∂e - ∂L∂a*∂E∂e)
 end
 
-
 """
-the Jacobian to convert between variables that are functions of (E,L) and (a,e)
-EXCLUDING fourth derivative
-"""
-function JacELToAE(ψ::Function,
-                   dψ::Function,
-                   d2ψ::Function,
-                   d3ψ::Function,
-                   a::Float64,
-                   e::Float64;
-                   TOLECC::Float64=ELTOLECC,
-                   dr::Float64=1.e-6)::Float64
-
-    d4ψ(r::Float64)::Float64 = (d3ψ(r+dr)-d3ψ(r))/dr
-
-    E, L, ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e = dELFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLECC=TOLECC)
-
-    return abs(∂E∂a*∂L∂e - ∂L∂a*∂E∂e)
-end
-
-
-"""
-the Jacobian to convert between variables that are functions of (E,L) and (a,e)
-EXCLUDING third derivative (fourth derivative is zer0)
-"""
-function JacELToAE(ψ::Function,
-                   dψ::Function,
-                   d2ψ::Function,
-                   a::Float64,
-                   e::Float64;
-                   TOLECC::Float64=ELTOLECC,
-                   dr::Float64=1.e-6)::Float64
-
-    d3ψ(r::Float64)::Float64 = (d2ψ(r+dr)-d2ψ(r))/dr
-    d4ψ(r::Float64)::Float64 = 0.
-
-    E, L, ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e = dELFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLECC=TOLECC)
-
-    return abs(∂E∂a*∂L∂e - ∂L∂a*∂E∂e)
-end
-
-
-
-########################################################################
-#
-# (rp,ra) -> (E,L) mapping : from (a,e) -> (E,L) mapping
-#
-########################################################################
-
-"""
+    EFromRpRa(ψ,dψ,d2ψ,d3ψ,rp,ra,TOLA,TOLECC)
 energy as a function of (rp,ra) for a given potential ψ (and its derivatives)
-INCLUDING third derivative of the potential
 """
-function EFromRpRa(ψ::Function,
-                   dψ::Function,
-                   d2ψ::Function,
-                   d3ψ::Function,
-                   rp::Float64,
-                   ra::Float64;
-                   TOLECC::Float64=ELTOLECC)::Float64
+function EFromRpRa(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
+                   rp::Float64,ra::Float64,
+                   TOLA::Float64,TOLECC::Float64=ELTOLECC)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
     a,e = AEFromRpRa(rp,ra)
 
@@ -418,36 +310,13 @@ function EFromRpRa(ψ::Function,
 end
 
 """
-energy as a function of (rp,ra) for a given potential ψ (and its derivatives)
-EXCLUDING third derivative of the potential
-"""
-function EFromRpRa(ψ::Function,
-                   dψ::Function,
-                   d2ψ::Function,
-                   rp::Float64,
-                   ra::Float64;
-                   TOLECC::Float64=ELTOLECC,
-                   FDIFF::Float64=1.e-8)::Float64
+    LFromRpRa(ψ,dψ,d2ψ,d3ψ,rp,ra,TOLA,TOLECC)
 
-    a,e = AEFromRpRa(rp,ra)
-
-    # define a numerical third derivative
-    d3ψ(x::Float64) = (d2ψ(x+FDIFF)-d2ψ(x))/FDIFF
-
-    return EFromAE(ψ,dψ,d2ψ,d3ψ,a,e,TOLECC=ELTOLECC)
-end
-
-"""
 angular momentum as a function of (rp,ra) for a given potential ψ (and its derivatives)
-INCLUDING third derivative of the potential
 """
-function LFromRpRa(ψ::Function,
-                   dψ::Function,
-                   d2ψ::Function,
-                   d3ψ::Function,
-                   rp::Float64,
-                   ra::Float64;
-                   TOLECC::Float64=ELTOLECC)::Float64
+function LFromRpRa(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
+                   rp::Float64,ra::Float64,
+                   TOLA::Float64,TOLECC::Float64=ELTOLECC)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
     a,e = AEFromRpRa(rp,ra)
 
@@ -455,64 +324,18 @@ function LFromRpRa(ψ::Function,
 end
 
 """
-angular momentum as a function of (rp,ra) for a given potential ψ (and its derivatives)
-EXCLUDING third derivative of the potential
+    ELFromRpRa(ψ,dψ,d2ψ,d3ψ,rp,ra,TOLA,TOLECC)
+
+combined energy + angular momentum as a function of (rp,ra) for a given potenial ψ (and its derivatives)
 """
-function LFromRpRa(ψ::Function,
-                   dψ::Function,
-                   d2ψ::Function,
-                   rp::Float64,
-                   ra::Float64;
-                   TOLECC::Float64=ELTOLECC,
-                   FDIFF::Float64=1.e-8)::Float64
+function ELFromRpRa(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
+                    rp::Float64,ra::Float64,
+                    TOLA::Float64,TOLECC::Float64=ELTOLECC)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
     a,e = AEFromRpRa(rp,ra)
 
-    # define a numerical third derivative
-    d3ψ(x::Float64) = (d2ψ(x+FDIFF)-d2ψ(x))/FDIFF
-
-    return LFromAE(ψ,dψ,d2ψ,d3ψ,a,e,TOLECC)
-end
-
-
-"""
-combined energy + angular momentum as a function of (rp,ra) for a given potenial ψ (and its derivatives)
-INCLUDING third derivative
-"""
-function ELFromRpRa(ψ::Function,
-                    dψ::Function,
-                    d2ψ::Function,
-                    d3ψ::Function,
-                    rp::Float64,
-                    ra::Float64;
-                    TOLECC::Float64=ELTOLECC)::Tuple{Float64,Float64}
-
-    a,e = AEFromRpRa(rp,ra)
-    E = EFromAE(ψ,dψ,d2ψ,d3ψ,a,e,TOLECC)
-    L = LFromAE(ψ,dψ,d2ψ,d3ψ,a,e,TOLECC)
-
-    return E, L
-end
-
-"""
-combined energy + angular momentum as a function of (rp,ra) for a given potenial ψ (and its derivatives)
-EXCLUDING third derivative
-"""
-function ELFromRpRa(ψ::Function,
-                    dψ::Function,
-                    d2ψ::Function,
-                    rp::Float64,
-                    ra::Float64;
-                    TOLECC::Float64=ELTOLECC,
-                    FDIFF::Float64=1.e-8)::Tuple{Float64,Float64}
-
-    a,e = ae_from_rpra(rp,ra)
-
-    # define a numerical third derivative
-    d3ψ(x::Float64) = (d2ψ(x+FDIFF)-d2ψ(x))/FDIFF
-
-    E = EFromAE(ψ,dψ,d2ψ,d3ψ,a,e;TOLECC=TOLECC)
-    L = LFromAE(ψ,dψ,d2ψ,d3ψ,a,e;TOLECC=TOLECC)
+    E = EFromAE(ψ,dψ,d2ψ,d3ψ,a,e,TOLA,TOLECC)
+    L = LFromAE(ψ,dψ,d2ψ,d3ψ,a,e,TOLA,TOLECC)
 
     return E, L
 end

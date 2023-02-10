@@ -7,6 +7,21 @@ Specific to Henon mapping.
 
 @IMPROVE are any of these helped by function specialisation?
 
+functions:
+henon_f(u)
+henon_df(u)
+henon_d2f(u)
+henon_d3f(u)
+henon_d4f(u)
+ru(u,a,e)
+drdu(u,a,e)
+ψeff(ψ,r,L)
+dψeffdr(dψ,r,L)
+d2ψeffdr2(d2ψ,r,L)
+ΘAE(ψ,dψ,d2ψ,d3ψ,u,a,e,TOLA,TOLECC,EDGE)
+ΘExpansionAE(ψ,dψ,d2ψ,d3ψ,u,a,e,TOLA,TOLECC)
+ΘAEdade(ψ,dψ,d2ψ,d3ψ,u,a,e,da,de,TOLA,TOLECC,EDGE)
+
 """
 
 ########################################################################
@@ -15,58 +30,71 @@ Specific to Henon mapping.
 #
 ########################################################################
 
-"""the henon anomaly increment
+"""
+    henon_f(u)
+
+the henon anomaly increment
 """
 function henon_f(u::Float64)
     u*(3/2 - (u^2)/2)
 end
 
-"""the derivative of the henon anomaly increment
+"""
+    henon_df(u)
+
+the derivative of the henon anomaly increment
 """
 function henon_df(u::Float64)
     1.5*(1.0 - u^(2))
 end
 
-"""the second derivative of the henon anomaly increment
+"""
+    henon_d2f(u)
+
+the second derivative of the henon anomaly increment
 """
 function henon_d2f(u::Float64)
     return -3u
 end
 
-"""the third derivative of the henon anomaly increment
+"""
+    henon_d3f(u)
+
+the third derivative of the henon anomaly increment
 """
 function henon_d3f(u::Float64)
     return -3.
 end
 
-"""the fourth derivative of the henon anomaly increment
+"""
+    henon_d4f(u)
+
+the fourth derivative of the henon anomaly increment
 """
 function henon_d4f(u::Float64)
     return 0.
 end
 
 
-########################################################################
-#
-# Radius as a function of u and derivatives in Hénon anomaly mapping
-#
-########################################################################
-
-"""ru(u,a,e)
-mapping from u->r in Henon variables
-
 """
-function ru(u::Float64,a::Float64,e::Float64;fun::Function=henon_f)::Float64
-    return a*(1+e*fun(u))
+    ru(u,a,e)
+
+mapping from u->r in Henon variables
+"""
+function ru(u::Float64,a::Float64,e::Float64)::Float64
+    fu = henon_f(u)
+    return a*(1+e*fu)
 end
 
 
-"""drdu(u,a,e)
-mapping from u->r in Henon variables
-
 """
-function drdu(u::Float64,a::Float64,e::Float64;dfun::Function=henon_df)::Float64
-    return a*e*dfun(u)
+    drdu(u,a,e)
+
+mapping from u->r in Henon variables
+"""
+function drdu(u::Float64,a::Float64,e::Float64)::Float64
+    dfu = henon_df(u)
+    return a*e*dfu
 end
 
 
@@ -77,6 +105,8 @@ end
 ########################################################################
 
 """
+    ψeff(ψ,r,L)
+
 the effective potential: note the relationship to Q
 """
 function ψeff(ψ::Function,r::Float64,L::Float64)::Float64
@@ -88,6 +118,8 @@ function ψeff(ψ::Function,r::Float64,L::Float64)::Float64
 end
 
 """
+    dψeffdr(dψ,r,L)
+
 the derivative of the effective potential
 """
 function dψeffdr(dψ::Function,r::Float64,L::Float64)::Float64
@@ -99,6 +131,8 @@ function dψeffdr(dψ::Function,r::Float64,L::Float64)::Float64
 end
 
 """
+    d2ψeffdr2(d2ψ,r,L)
+
 the second derivative of the effective potential
 """
 function d2ψeffdr2(d2ψ::Function,r::Float64,L::Float64)::Float64
@@ -110,93 +144,26 @@ function d2ψeffdr2(d2ψ::Function,r::Float64,L::Float64)::Float64
 end
 
 
-########################################################################
-#
-# Θ(u) (frequencies integrand anomaly)
-#
-########################################################################
-
-"""ΘAE(ψ,dψ,d2ψ,d3ψ,u,a,e[,EDGE,TOLECC,f,df,d2f,d3f,d4f])
+"""
+    ΘAE(ψ,dψ,d2ψ,d3ψ,u,a,e,TOLA,TOLECC,EDGE)
 
 Θ, the anomaly for computing orbit averages as a function of (a,e)
-
 equivalent to Θ = (dr/du)(1/Vrad)
 
-a minimal number of arguments need to be specified here
-
 """
-@inline function ΘAE(ψ::F0,
-             dψ::F1,
-             d2ψ::F2,
-             d3ψ::F3,
-             u::Float64,
-             a::Float64,
-             e::Float64;
-             EDGE::Float64=0.01,
-             TOLECC::Float64=ELTOLECC,
-             f::Function=henon_f,
-             df::Function=henon_df,
-             d2f::Function=henon_d2f,
-             d3f::Function=henon_d3f,
-             d4f::Function=henon_d4f)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
+function ΘAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
+             u::Float64,a::Float64,e::Float64,
+             TOLA::Float64,TOLECC::Float64,EDGE::Float64)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
     # use the expanded approximation
     if ((1-abs(u))<EDGE)
-        return ΘExpansionAE(ψ,dψ,d2ψ,d3ψ,u,a,e,TOLECC,f=f,d2f=d2f,d3f=d3f,d4f=d4f)
+        return ΘExpansionAE(ψ,dψ,d2ψ,d3ψ,u,a,e,TOLA,TOLECC)
 
     # if not close to the boundary, can calculate as normal
     else
-        E, L = ELFromAE(ψ,dψ,d2ψ,d3ψ,a,e,TOLECC)
+        E, L = ELFromAE(ψ,dψ,d2ψ,d3ψ,a,e,TOLA,TOLECC)
 
-        r = ru(u,a,e;fun=f)
-
-        # this can somehow be negative: do we need an extra check?
-        denomsq = 2*(E - ψeff(ψ,r,L))
-
-        if denomsq < 0.0
-            # go back to the expansion -- or should we return 0.0?
-            return ΘExpansionAE(ψ,dψ,d2ψ,d3ψ,u,a,e,TOLECC,f=f,d2f=d2f,d3f=d3f,d4f=d4f)
-        end
-
-        # do the standard return
-        return a * e * df(u) / sqrt(denomsq)
-    end
-end
-
-"""ΘAE(ψ,dψ,d2ψ,d3ψ,u,a,e[,EDGE,TOLECC,f,df,d2f,d3f,d4f])
-
-Θ, the anomaly for computing orbit averages as a function of (a,e)
-
-equivalent to Θ = (dr/du)(1/Vrad)
-
-a MAXIMAL number of arguments need to be specified here
-
-"""
-@inline function ΘAE(ψ::F0,
-             dψ::F1,
-             d2ψ::F2,
-             d3ψ::F3,
-             u::Float64,
-             a::Float64,
-             e::Float64,
-             TOLECC::Float64,
-             EDGE::Float64;
-             f::Function=henon_f,
-             df::Function=henon_df,
-             d2f::Function=henon_d2f,
-             d3f::Function=henon_d3f,
-             d4f::Function=henon_d4f)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
-
-    # use the expanded approximation
-    if ((1-abs(u))<EDGE)
-        #return ΘExpansionAE(ψ,dψ,d2ψ,d3ψ,u,a,e,TOLECC,f=f,d2f=d2f,d3f=d3f,d4f=d4f)
-        return ΘExpansionAE(ψ,dψ,d2ψ,d3ψ,u,a,e,TOLECC)
-
-    # if not close to the boundary, can calculate as normal
-    else
-        E, L = ELFromAE(ψ,dψ,d2ψ,d3ψ,a,e,TOLECC)
-
-        r = ru(u,a,e;fun=f)
+        r = ru(u,a,e)
 
         # this can somehow be negative: do we need an extra check?
         denomsq = 2*(E - ψeff(ψ,r,L))
@@ -204,17 +171,18 @@ a MAXIMAL number of arguments need to be specified here
         if denomsq < 0.0
             # go back to the expansion -- or should we return 0.0?
             #return ΘExpansionAE(ψ,dψ,d2ψ,d3ψ,u,a,e,TOLECC,f=f,d2f=d2f,d3f=d3f,d4f=d4f)
-            return ΘExpansionAE(ψ,dψ,d2ψ,d3ψ,u,a,e,TOLECC)
+            return ΘExpansionAE(ψ,dψ,d2ψ,d3ψ,u,a,e,TOLA,TOLECC)
         end
 
         # do the standard return
-        return a * e * df(u) / sqrt(denomsq)
+        return a * e * henon_df(u) / sqrt(denomsq)
     end
 end
 
 
 
-"""ΘExpansionAE(ψ,dψ,d2ψ,d3ψ,u,a,e[,EDGE,TOLECC,f,df,d2f,d3f,d4f])
+"""
+    ΘExpansionAE(ψ,dψ,d2ψ,d3ψ,u,a,e,TOLA,TOLECC)
 
 ΘExpansion, the anomaly for computing orbit averages as a function of (a,e)
 
@@ -224,52 +192,24 @@ BIG ALLOCATIONS here from ELTOLECC not being specified.
 Downside is that this guarantees allocations if TOLECC not specified.
 
 """
-@inline function ΘExpansionAE(ψ::F0,
-                      dψ::F1,
-                      d2ψ::F2,
-                      d3ψ::F3,
-                      u::Float64,
-                      a::Float64,
-                      e::Float64;
-                      TOLECC::Float64=ELTOLECC,
-                      f::Function=henon_f,
-                      df::Function=henon_df,
-                      d2f::Function=henon_d2f,
-                      d3f::Function=henon_d3f,
-                      d4f::Function=henon_d4f)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
-
-
-    return ΘExpansionAE(ψ,dψ,d2ψ,d3ψ,u,a,e,TOLECC,f=f,d2f=d2f,d3f=d3f,d4f=d4f)
-end
-
-@inline function ΘExpansionAE(ψ::F0,
-                      dψ::F1,
-                      d2ψ::F2,
-                      d3ψ::F3,
-                      u::Float64,
-                      a::Float64,
-                      e::Float64,
-                      TOLECC::Float64;
-                      f::Function=henon_f,
-                      df::Function=henon_df,
-                      d2f::Function=henon_d2f,
-                      d3f::Function=henon_d3f,
-                      d4f::Function=henon_d4f)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
+function ΘExpansionAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
+                      u::Float64,a::Float64,e::Float64,
+                      TOLA::Float64,TOLECC::Float64)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
     # which boundary are we close to?
     ul = (u > 0) ? 1.0 : -1.0
 
     # compute the corresponding radius value
-    rl = ru(ul,a,e,fun=f)
+    rl = ru(ul,a,e)
 
     # compute energy and angular momentum from the potential (allow for expansions)
-    E, L = ELFromAE(ψ,dψ,d2ψ,d3ψ,a,e,TOLECC)
+    E, L = ELFromAE(ψ,dψ,d2ψ,d3ψ,a,e,TOLA,TOLECC)
 
     # compute the derivatives of the effective potential
     dψeffl, d2ψeffl = dψeffdr(dψ,rl,L), d2ψeffdr2(d2ψ,rl,L)
 
     # compute the derivatives of the Henon f function
-    d2fl, d3fl, d4fl = d2f(ul), d3f(ul), d4f(ul)
+    d2fl, d3fl, d4fl = henon_d2f(ul), henon_d3f(ul), henon_d4f(ul)
 
     # define the prefactor
     pref = - ul * a * e
@@ -295,39 +235,23 @@ end
 end
 
 
-########################################################################
-#
-# Θ(u) derivatives w.r.t. a and e
-#
-########################################################################
 
-
-"""ΘAEdade(ψ,dψ,d2ψ,d3ψ,u,a,e[,EDGE,TOLECC,f,df,d2f,d3f,d4f,da,de])
+"""
+    ΘAEdade(ψ,dψ,d2ψ,d3ψ,u,a,e,da,de,TOLA,TOLECC,EDGE)
 
 numerical differentiation of Θ w.r.t. semimajor axis and eccentricity
 
 
 """
-function ΘAEdade(ψ::F0,
-                 dψ::F1,
-                 d2ψ::F2,
-                 d3ψ::F3,
-                 u::Float64,
-                 a::Float64,
-                 e::Float64;
-                 EDGE::Float64=0.01,
-                 TOLECC::Float64=ELTOLECC,
-                 f::Function=henon_f,
-                 df::Function=henon_df,
-                 d2f::Function=henon_d2f,
-                 d3f::Function=henon_d3f,
-                 d4f::Function=henon_d4f,
-                 da::Float64=1.0e-8,
-                 de::Float64=1.0e-8)::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
+function ΘAEdade(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
+                 u::Float64,a::Float64,e::Float64,
+                 da::Float64=1.0e-8,de::Float64=1.0e-8,
+                 TOLA::Float64=0.001,TOLECC::Float64=ELTOLECC,
+                 EDGE::Float64=0.01)::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
     # derivative w.r.t. semimajor axis: always safe
-    thHa = ΘAE(ψ,dψ,d2ψ,d3ψ,u,a+da,e,EDGE=EDGE,TOLECC=TOLECC,f=f,df=df,d2f=d2f,d3f=d3f,d4f=d4f)
-    thLa = ΘAE(ψ,dψ,d2ψ,d3ψ,u,a   ,e,EDGE=EDGE,TOLECC=TOLECC,f=f,df=df,d2f=d2f,d3f=d3f,d4f=d4f)
+    thHa = ΘAE(ψ,dψ,d2ψ,d3ψ,u,a+da,e,TOLA,TOLECC,EDGE)
+    thLa = ΘAE(ψ,dψ,d2ψ,d3ψ,u,a   ,e,TOLA,TOLECC,EDGE)
     dΘda = (thHa-thLa)/da
 
     # derivative w.r.t. semimajor axis: safe unless too close to e=1
@@ -336,48 +260,8 @@ function ΘAEdade(ψ::F0,
         de *= -1
     end
 
-    thHe = ΘAE(ψ,dψ,d2ψ,d3ψ,u,a,e+de,EDGE=EDGE,TOLECC=TOLECC,f=f,df=df,d2f=d2f,d3f=d3f,d4f=d4f)
+    thHe = ΘAE(ψ,dψ,d2ψ,d3ψ,u,a,e+de,TOLA,TOLECC,EDGE)
     thLe = thLa # use the equivalency of the cross terms
-    dΘde = (thHe-thLe)/de
-
-    return dΘda,dΘde
-end
-
-
-"""
-fast version, requiring extra parameters
-
-"""
-function ΘAEdade(ψ::F0,
-                 dψ::F1,
-                 d2ψ::F2,
-                 d3ψ::F3,
-                 u::Float64,
-                 a::Float64,
-                 e::Float64,
-                 EDGE::Float64,
-                 TOLECC::Float64,
-                 da::Float64,
-                 de::Float64;
-                 f::Function=henon_f,
-                 df::Function=henon_df,
-                 d2f::Function=henon_d2f,
-                 d3f::Function=henon_d3f,
-                 d4f::Function=henon_d4f)::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
-
-    # derivative w.r.t. semimajor axis: always safe
-    thHa = ΘAE(ψ,dψ,d2ψ,d3ψ,u,a+da,e,TOLECC,EDGE,f=f,df=df,d2f=d2f,d3f=d3f,d4f=d4f)
-    thLa = ΘAE(ψ,dψ,d2ψ,d3ψ,u,a   ,e,TOLECC,EDGE,f=f,df=df,d2f=d2f,d3f=d3f,d4f=d4f)
-    dΘda = (thHa-thLa)/da
-
-    # derivative w.r.t. semimajor axis: safe unless too close to e=1
-    # in that case, reverse de
-    if e>(1-de)
-        de *= -1
-    end
-
-    thHe = ΘAE(ψ,dψ,d2ψ,d3ψ,u,a,e+de,TOLECC,EDGE,f=f,df=df,d2f=d2f,d3f=d3f,d4f=d4f)
-    thLe = thLa
     dΘde = (thHe-thLe)/de
 
     return dΘda,dΘde

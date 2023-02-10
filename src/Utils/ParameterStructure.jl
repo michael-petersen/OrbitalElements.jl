@@ -36,7 +36,7 @@ function OrbitsParametersCreate(dψ::Function,d2ψ::Function,Ω₀::Float64;
 
 
     # Frequency truncation parameters
-    αmin,αmax = 0.,1.#OrbitalElements.αminmax(dψ,d2ψ,rmin,rmax,Ω₀)
+    αmin,αmax = αminmax(dψ,d2ψ,rmin,rmax,Ω₀)
 
     return OrbitsParameters(Ω₀,rmin,rmax,αmin,αmax,
                               EDGE,TOLECC,TOLA,NINT,FDIFF,da,de,ITERMAX,invε)
