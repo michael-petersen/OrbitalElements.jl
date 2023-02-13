@@ -8,11 +8,11 @@ using Roots
 using Interpolations
 
 # utils: simple function extremisation, input/output, basic orbit coordinate transformations, simple integrators
+include("Utils/ParameterStructure.jl")
 include("Utils/Extremise.jl")
 include("Utils/IO.jl")
 include("Utils/OrbitDefinitions.jl")
 include("Utils/Integrators.jl")
-include("Utils/ParameterStructure.jl")
 include("Utils/DerivationInterpolation.jl")
 
 # bring in the test potentials (not strictly needed)

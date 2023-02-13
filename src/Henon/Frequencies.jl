@@ -129,13 +129,13 @@ function DαβHenonΘAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
         return α, β, ∂α∂a, ∂β∂a, ∂α∂e, ∂β∂e
     elseif e>(1.0-tole)
         # Derivation outside the integral
-        α  , β   = αβHenonΘAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLECC,NINT,EDGE,Ω₀)
+        α  , β   = αβHenonΘAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLA,TOLECC,NINT,EDGE,Ω₀)
 
         # For a derivatives
-        αap, βap = αβHenonΘAE(ψ,dψ,d2ψ,d3ψ,d4ψ,ap,e,TOLECC,NINT,EDGE,Ω₀)
+        αap, βap = αβHenonΘAE(ψ,dψ,d2ψ,d3ψ,d4ψ,ap,e,TOLA,TOLECC,NINT,EDGE,Ω₀)
 
         # For e derivatives
-        αep, βep = αβHenonΘAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,ep,TOLECC,NINT,EDGE,Ω₀)
+        αep, βep = αβHenonΘAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,ep,TOLA,TOLECC,NINT,EDGE,Ω₀)
 
         ∂α∂a = (αap-α)/da
         ∂β∂a = (βap-β)/da

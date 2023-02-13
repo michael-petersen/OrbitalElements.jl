@@ -20,7 +20,8 @@ function Getϖ(ω::Complex{Float64},
               rmin::Float64=1.e-10,
               rmax::Float64=1000.)::ComplexF64 where {F1 <: Function, F2 <: Function}
 
-    ωmin, ωmax = Findωminωmax(n1,n2,dψ,d2ψ;Ω₀=Ω₀,rmin=rmin,rmax=rmax)
+    αmin, αmax = αminmax(dψ,d2ψ,rmin,rmax,Ω₀)
+    ωmin, ωmax = Findωminωmax(n₁,n₂,dψ,d2ψ,αmin,αmax,Ω₀,rmin,rmax)
 
     return Getϖ(ω,ωmin,ωmax)
 end
@@ -67,21 +68,6 @@ function Findωminωmax(n1::Int64,n2::Int64,
      ωmax = max(ωncirc(xext), ωncirc(rmin), ωncirc(rmax), (n1+0.5*n2)*αmin, (n1+0.5*n2)*αmax)
 
      return ωmin, ωmax
-end
-
-"""
-    Findωminωmax(n₁,n₂,dψ,d2ψ,Ω₀,rmin,rmax)
-"""
-
-function Findωminωmax(n1::Int64,n2::Int64,
-                      dψ::F1,d2ψ::F2,
-                      Ω₀::Float64=1.,
-                      rmin::Float64=1.0e-8,
-                      rmax::Float64=1.0e5)::Tuple{Float64,Float64} where {F1 <: Function, F2 <: Function}
-
-    αmin, αmax = αminmax(dψ,d2ψ,rmin,rmax,Ω₀)
-
-    return Findωminωmax(n1,n2,dψ,d2ψ,αmin,αmax,Ω₀,rmin,rmax)
 end
 
 

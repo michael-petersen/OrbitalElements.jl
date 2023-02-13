@@ -61,7 +61,6 @@ If one wanted to write a new frequency anomaly, this is the template to use.
 - Getϖ(ω₀,n₁,n₂,dψ,d2ψ,Ω₀,rmin,rmax)
 - Getϖ(ω,ωmin,ωmax)
 - Findωminωmax(n₁,n₂,dψ,d2ψ,αmin,αmax,Ω₀,rmin,rmax)
-- Findωminωmax(n₁,n₂,dψ,d2ψ,Ω₀,rmin,rmax)
 - FindVminVmax(u,n₁,n₂,dψ,d2ψ,ωmin,ωmax,αmin,αmax,βc,Ω₀,rmin,rmax)
 - HUFunc(u,ωmin,ωmax)
 - FindVbound(n₁,n₂,dψ,d2ψ,Ω₀,rmin,rmax)
