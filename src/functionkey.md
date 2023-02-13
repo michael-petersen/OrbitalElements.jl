@@ -12,8 +12,9 @@ And more importantly, what is the full list of arguments?
 - ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,da,de,TOLA,TOLECC,NINT,EDGE,Ω₀)
 - ComputeActionsAE(ψ,dψ,d2ψ,d3ψ,a,e,TOLA,TOLECC,NINT)
 - ComputeActionsAEWithDeriv(ψ,dψ,d2ψ,d3ψ,a,e,da,de,TOLA,TOLECC,NINT)
-- ComputeAEFromFrequencies(ψ,dψ,d2ψ,d3ψ,a,e,eps,maxiter,da,de,TOLA,TOLECC)
-- JacELToαβAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLA,TOLECC,NINT,NINT,Ω₀)
+- ComputeAEFromFrequencies(ψ,dψ,d2ψ,d3ψ,d4ψ,Ω1,Ω2,ITERMAX,da,de,TOLA,TOLECC,rmin,rmax,invε,Ω₀)
+- ComputeAEFromActions(ψ,dψ,d2ψ,d3ψ,d4ψ,J,L,ITERMAX,da,de,TOLA,TOLECC,rmin,rmax,invε)
+- JacELToαβAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLA,TOLECC,NINT,EDGE,Ω₀)
 - JacαβToAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,NINT,EDGE,TOLA)
 
 ### Circular/CircularFrequencies.jl

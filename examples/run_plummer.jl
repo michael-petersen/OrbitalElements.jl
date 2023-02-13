@@ -24,7 +24,7 @@ rmin,rmax = 0.,1000000.0
 αmin,αmax = OrbitalElements.αminmax(dψ,d2ψ,rmin,rmax,Ω₀)
 println("(αmin,αmax)=($αmin,$αmax)")
 
-n1,n2 = 1,-1
+n1,n2 = 3,0
 ωmin,ωmax = OrbitalElements.Findωminωmax(n1,n2,dψ,d2ψ,αmin,αmax,Ω₀,rmin,rmax)
 println("(ωmin,ωmax)=($ωmin,$ωmax)")
 
@@ -35,19 +35,26 @@ println("(vmin,vmax)=($vmin,$vmax)")
 vval = 0.5*(vmax-vmin) + vmin
 
 
+# select an (a,e) value for the orbit
+a,e = 0.01, 0.5
+
+da,de,TOLECC,NINT,EDGE,TOLA,ITERMAX,rmin,rmax,invε,eps = 0.001,0.001,0.001,32,0.01,0.001,100,1.e-6,1.e6,1.e-10,1.e-12
+α,β = OrbitalElements.αβFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLA,TOLECC,NINT,EDGE,Ω₀)
+uval,vval = OrbitalElements.UVFromαβ(α,β,n1,n2,ωmin,ωmax)
+
 α,β = OrbitalElements.αβFromUV(uval,vval,n1,n2,ωmin,ωmax)
 println("(u,v)=($uval,$vval)")
 println("(α,β)=($α,$β)")
 
-Ω1,Ω2 = α*Ω₀,α*β*Ω₀
+
+
+Ω1,Ω2 = OrbitalElements.FrequenciesFromαβ(α,β,Ω₀)
 # (Ω1,Ω2) -> (a,e)
-da,de,TOLECC,NINT,EDGE,TOLA,ITERMAX,rmin,rmax,invε,eps = 0.001,0.001,0.001,32,0.01,0.001,100,1.e-6,1.e6,1.e-10,1.e-12
 a,e = OrbitalElements.AEFromΩ1Ω2Brute(Ω1,Ω2,ψ,dψ,d2ψ,d3ψ,d4ψ,ITERMAX,da,de,TOLA,TOLECC,EDGE,NINT,rmin,rmax,invε,Ω₀)
-println("(a,e)=($a,$e)")
+println("inverted (a,e)=($a,$e)")
 
 
-# select an (a,e) value for the orbit
-a,e = 0.1, 0.5
+
 rp,ra = OrbitalElements.RpRaFromAE(a,e)
 println("rp=$rp,ra=$ra")
 
@@ -69,9 +76,9 @@ testrp = OrbitalElements.RFromURpRa(u,rp,ra,bc)
 println("rp=$rp,rp=$testrp")
 
 O1,O2,Jr = OrbitalElements.ComputeFrequenciesJAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLA,TOLECC,NINT,EDGE)
-println("O1=$O1,O2=$O2,Jr=$Jr")
+println("Generic  O1=$O1,O2=$O2,Jr=$Jr")
 O1,O2,Jr = OrbitalElements.PlummerOmega12FromRpRa(rp,ra,bc,M,G,action=true)
-println("O1=$O1,O2=$O2,Jr=$Jr")
+println("Specific O1=$O1,O2=$O2,Jr=$Jr")
 
 α,β = OrbitalElements.PlummerAlphaBetaFromRpRa(rp,ra,bc,M,G)
 println("α=$α,β=$β")
