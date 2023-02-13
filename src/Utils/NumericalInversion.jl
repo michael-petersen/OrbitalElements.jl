@@ -10,7 +10,98 @@ VERBOSE rules:
 """
 
 
-"""AEFromΩ1Ω2Brute(Ω₁,Ω₂,ψ,dψ,d2ψ,d3ψ,d4ψ,eps,ITERMAX,TOLECC,TOLA,da,de,EDGE,NINT)
+"""
+numerical inversion of (Ω₁,Ω₂) -> (a,e)
+by brute-forcing the derivative increments dΩ₁/da, dΩ₁/de, deΩ₂/da, dΩ₂/de
+
+VERBOSE rules:
+0: no printing
+2: failure cases diagnostics
+3: iteration counters
+
+"""
+
+
+"""
+    inverse2Dlinear(a,b,c,d,y1,y2)
+
+    Inverse 2D linear system Ax = y, return (0., 0.) if non inversible
+
+    A = (a  b)
+        (c  d)
+"""
+function inverse2Dlinear(a::Float64,b::Float64,
+                         c::Float64,d::Float64,
+                         y1::Float64,y2::Float64)::Tuple{Float64,Float64}
+
+    deta = a*d - b*c
+    if deta == 0.
+        return 0., 0.
+    else
+        return (d*y1 - b*y2)/deta, (a*y2 - c*y1)/deta
+    end
+end
+
+
+"""
+    nextguess(acur,ecur,adir,edir)
+
+    Determine the next guess point in the Newton-Rahpson algorithm
+    given the current point (acur, ecur) and the direction (adir, edir),
+    dealing with boundary crossing
+"""
+function nextguess(acur::Float64,ecur::Float64,
+                   adir::Float64,edir::Float64)
+
+    # If current point at the domain edge
+    # and direction towards out.
+    if ((ecur == 0.) && (edir < 0.)) || ((ecur == 1.) && (edir > 0.))
+        edir = 0.
+    elseif (acur == 0.) && (adir < 0.)
+        adir = 0.
+    end
+
+    # If naive end point (acur + adir, ecur + edir) is outside the domain:
+    # Take the point in the middle of the current point and the border in the increment direction
+    # (Dividing the increment length until being in the domain can lead to unexpected behaviour :
+    # new point immediatly close to the border where inversion can be impossible).
+    # We apply this rule also for (naive end) positions close to the border (1% safety band)
+    asafemin = 0.01
+    esafemin = 0.01
+    esafemax = 0.99
+    if (acur + adir < asafemin) || (ecur + edir < esafemin) || (ecur + edir > esafemax)
+
+        # Fraction of the direction to reach the border
+        # acur + afrac * adir = 0.
+        afrac = (adir >= 0.) ? Inf : -acur/adir
+        if edir == 0.
+            efrac = Inf
+        elseif edir > 0.
+            # Boarder to reach: e = 1.
+            # ecur + efrac * edir = 1.
+            efrac = (1.0-ecur)/edir
+        else
+            # Boarder to reach: e = 0.
+            # ecur + efrac * edir = 0.
+            efrac = -ecur/edir
+        end
+
+        # Take the minimal fraction (and not more than 1.0 -> very important !)
+        dirfrac = min(min(afrac,efrac),1.0)
+
+        anew = (dirfrac == Inf) ? acur + adir : acur + 0.5*dirfrac*adir
+        enew = (dirfrac == Inf) ? ecur + edir : ecur + 0.5*dirfrac*edir
+    else
+        anew, enew = acur + adir, ecur + edir
+    end
+
+    return anew, enew
+end
+
+
+
+"""
+    AEFromΩ1Ω2Brute(Ω₁,Ω₂,ψ,dψ,d2ψ,d3ψ,d4ψ,ITERMAX,da,de,TOLA,TOLECC,EDGE,NINT,rmin,rmax,invε,Ω₀)
 
 basic Newton-Raphson algorithm to find (a,e) from (Ω₁,Ω₂) brute force derivatives.
 
@@ -18,216 +109,106 @@ all arguments must be specified
 
 """
 function AEFromΩ1Ω2Brute(Ω₁::Float64,Ω₂::Float64,
-                         ψ::F0,
-                         dψ::F1,
-                         d2ψ::F2,
-                         d3ψ::F3,
-                         d4ψ::F4,
-                         eps::Float64,
+                         ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
                          ITERMAX::Int64,
-                         TOLECC::Float64,TOLA::Float64,
                          da::Float64,de::Float64,
-                         EDGE::Float64,
-                         NINT::Int64)::Tuple{Float64,Float64,Int64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
-    """
-    @IMPROVE add escape for circular orbits
-
-    """
+                         TOLA::Float64,TOLECC::Float64,
+                         EDGE::Float64,NINT::Int64,
+                         rmin::Float64=1.e-6,rmax=1.e6,
+                         invε::Float64=1.e-8,Ω₀::Float64=1.0)::Tuple{Float64,Float64,Int64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
     # get the circular orbit (maximum radius) for a given Ω₁,Ω₂. use the stronger constraint.
-    acirc = RcircFromΩ1circ(Ω₁,dψ,d2ψ)
+    acirc = RcircFromΩ1circ(Ω₁,dψ,d2ψ,rmin,rmax)
 
     # then start from ecc=0.5 and take numerical derivatives
     aguess = acirc
     eguess = 0.5
-    #f1,f2 = ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,aguess,eguess,NINT=NINT,EDGE=EDGE,TOLECC=TOLECC)
-    f1,f2 = ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,aguess,eguess,TOLECC,NINT,EDGE,TOLA)
+
+    f1,f2,df1da,df2da,df1de,df2de = ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,d4ψ,aguess,eguess,da,de,TOLA,TOLECC,NINT,EDGE,Ω₀)
+
+    tol = (Ω₁ - f1)^2 + (Ω₂ - f2)^2
+    if (tol < (invε)^2)
+        return aguess, eguess, iter, tol
+    end
 
     # 2d Newton Raphson inversion and find new increments
-    iter = 0
-    while (((Ω₁ - f1)^2 + (Ω₂ - f2)^2) > eps^2)
+    for iter = 1:ITERMAX
 
-        #f1,f2,df1da,df2da,df1de,df2de = ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,d4ψ,aguess,eguess,da=da,de=de,TOLECC=TOLECC,NINT=NINT,EDGE=EDGE)
-        f1,f2,df1da,df2da,df1de,df2de = ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,d4ψ,aguess,eguess,da,de,TOLECC,NINT,EDGE)
+        increment1, increment2 = inverse2Dlinear(df1da,df1de,df2da,df2de,Ω₁-f1,Ω₂-f2)
 
-        # one break: negative frequencies when getting very close to the centre.
-        # define the failure mode: return circular orbit at the minimum size
-        if (f1 < 0.0) | (f2 < 0.0)
-            return da,0.0,iter+1,1.
-        end
-
-        # another failure mode: very small O1
-
-
-        jacobian = [df1da df1de ; df2da df2de]
-
-        # this increment reports occasional failures; why?
-        try
-            increment = jacobian \ (-([f1 ; f2] - [Ω₁ ; Ω₂]))
-            aguess,eguess = aguess + increment[1],eguess + increment[2]
-        catch e # this catch appears to not work because LAPACK is doing something under the hood
-            #(VERBOSE > 1) && println("OrbitalElements.NumericalInversion.AEFromΩ1Ω2Brute: bad division for Jacobian=$jacobian and (f1,f2)=($f1,$f2), (Ω₁,Ω₂)=($Ω₁,$Ω₂) at (a,e)=($aguess,$eguess).")
-            # are we just in some tiny bad patch? # reset to 'safe' values
-            aguess,eguess = aguess + 10da,0.5
-            increment = [0.0;0.0]
-
-            if iter > ITERMAX
-                finaltol = ((Ω₁ - f1)^2 + (Ω₂ - f2)^2)
-                return aguess,eguess,-2,finaltol
-            end
-        end
-
-        # the try...catch above is failing for some reason
-        if (@isdefined increment) == false
-            increment = [0.0;0.0]
-        end
-
-        # @WARNING: these appear to have broken something.
-        # if bad guesses, needs to reset to a different part of space
-        # can't go too small
-        if eguess < TOLECC
-            # go halfway between the previous guess and 0.
-            try
-                # reset eguess value
-                eguess = eguess - increment[2]
-                eguess = max(TOLECC,0.5eguess)
-            catch e
-                #(VERBOSE > 1) && println("OrbitalElements.NumericalInversion.AEFromΩ1Ω2Brute: guessing close to ecc=0: ",eguess," (a=",aguess,")")
-                eguess = max(TOLECC,0.5eguess)
-            end
-        end
-
-        if eguess >= (1.0-TOLECC)
-            # go halfway between the previous guess and 1.
-            try
-                eguess = eguess - increment[2]
-                eguess = min(1.0-TOLECC,eguess + 0.5*(1-eguess))
-            catch e
-                println("OrbitalElements.NumericalInversion.AEFromΩ1Ω2Brute: guessing close to ecc=1: ",eguess," (a=",aguess,") for increment ",increment)
-                eguess = min(1.0-TOLECC,eguess + 0.5*(1-eguess))
-            end
-        end
-
-        iter += 1
-
-        if iter > ITERMAX
+        # If non invertible
+        if (increment1 == 0.) && (increment2 == 0.)
             break
         end
 
+        # Update guesses
+        anew, enew = nextguess(aguess,eguess,increment1,increment2)
+        aguess, eguess = anew, enew
+
+        f1,f2,df1da,df2da,df1de,df2de = ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,d4ψ,aguess,eguess,da,de,TOLA,TOLECC,NINT,EDGE,Ω₀)
+
+        tol = (Ω₁ - f1)^2 + (Ω₂ - f2)^2
+        if (tol < (invε)^2)
+            return aguess, eguess, iter, tol
+        end
     end
 
-
-    #(VERBOSE > 2) && println("OrbitalElements.NumericalInversion.AEFromΩ1Ω2Brute: niter=",iter)
-
-    finaltol = ((Ω₁ - f1)^2 + (Ω₂ - f2)^2)
-
-    # check here to not allow bad values?
-    if isnan(aguess) | isnan(eguess)
-        #(VERBOSE > 1) && println("OrbitalElements.NumericalInversion.AEFromΩ1Ω2Brute: failed for inputs (Ω₁,Ω₂)=($Ω₁,$Ω₂).")
-
-        # return a semi-equivalent circular orbit, as the failure mode is mostly very small orbits
-        return acirc,0.0,-1,finaltol
-
-    else
-        return aguess,eguess,iter,finaltol
-    end
+    return aguess,eguess,ITERMAX,tol
 end
 
 
-"""AEFromΩ1Ω2Brute(Ω₁,Ω₂,ψ,dψ,d2ψ,d3ψ[,eps,maxiter,TOLECC,TOLA,da,de,VERBOSE])
+"""
+    AEFromJLBrute(J,L,ψ,dψ,d2ψ,d3ψ,d4ψ,ITERMAX,da,de,TOLA,TOLECC,EDGE,NINT,rmin,rmax,invε)
 
-basic Newton-Raphson algorithm to find (a,e) from (Ω₁,Ω₂) brute force derivatives.
-
-with optional arguments
+basic Newton-Raphson algorithm to find (a,e) from (Jᵣ,L) brute force derivatives.
 
 """
-function AEFromΩ1Ω2Brute(Ω₁::Float64,Ω₂::Float64,
-                         ψ::F0,
-                         dψ::F1,
-                         d2ψ::F2,
-                         d3ψ::F3,
-                         d4ψ::F4;
-                         eps::Float64=1*10^(-10),
-                         ITERMAX::Int64=100,
-                         TOLECC::Float64=0.001,TOLA::Float64=0.0001,
-                         da::Float64=1.0e-5,de::Float64=1.0e-5,
-                         EDGE::Float64=0.03,
-                         NINT::Int64=64)::Tuple{Float64,Float64,Int64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
+function AEFromJLBrute(J::Float64,L::Float64,
+                       ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
+                       ITERMAX::Int64,
+                       da::Float64,de::Float64,
+                       TOLA::Float64,TOLECC::Float64,
+                       EDGE::Float64,NINT::Int64,
+                       rmin::Float64=1.e-6,rmax=1.e6,
+                       invε::Float64=1.e-8)::Tuple{Float64,Float64,Int64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
-    return AEFromΩ1Ω2Brute(Ω₁,Ω₂,ψ,dψ,d2ψ,d3ψ,d4ψ,eps,ITERMAX,TOLECC,TOLA,da,de,EDGE,NINT)
+    # get the circular orbit (maximum radius) for a given angular momentum.
+    acirc = RcircFromL(L,dψ,rmin,rmax)
 
-end
+    # then start from ecc=0.5 and take numerical derivatives
+    aguess = acirc
+    eguess = 0.5
 
-"""ae_from_EL_brute(E,L,ψ,dψ,d2ψ[,eps,maxiter,TOLECC,VERBOSE])
-basic Newton-Raphson algorithm to find (a,e) from (E,L) brute force derivatives.
-@IMPROVE add escape for circular orbits
-"""
-function ae_from_EL_brute(E::Float64,L::Float64,
-                          ψ::Function,
-                          dψ::Function,
-                          d2ψ::Function,
-                          eps::Float64=1*10^(-6),
-                          maxiter::Int64=1000,
-                          TOLECC::Float64=0.001,
-                          VERBOSE::Int64=0)
-    #
+    Jguess, Lguess, dJgda, dLgda, dJgde, dLgde = ComputeActionsAEWithDeriv(ψ,dψ,d2ψ,d3ψ,aguess,eguess,da,de,TOLA,TOLECC,NINT)
 
-    # get the circular orbit (maximum radius) for a given E. use the stronger constraint.
-    #acirc = Omega1circ_to_radius(Ω₁,dψ,d2ψ)
-    # is this the best launching eccentricity?
-    aguess,eccguess = 1.,TOLECC
-
-    rpguess,raguess = rpra_from_ae(aguess,eccguess)
-
-    if (VERBOSE>2)
-      println("iter=",-1," aguess=",aguess," eguess=",eccguess)
+    tol = (Jguess - J)^2 + (Lguess - L)^2
+    if (tol < (invε)^2)
+        return aguess, eguess, iter, tol
     end
-
-    Eguess,Lguess,dEda,dEde,dLda,dLde = dEdLFromRpRa(ψ,dψ,d2ψ,rpguess,raguess,da=0.0001,de=0.0001,TOLECC=TOLECC)
-
-
 
     # 2d Newton Raphson inversion and find new increments
-    iter = 0
-    while (((E - Eguess)^2 + (L - Lguess)^2) > eps^2)
+    for iter = 1:ITERMAX
 
-        # convert to rp,ra for EL input
-        rpguess,raguess = rpra_from_ae(aguess,eccguess)
+        increment1, increment2 = inverse2Dlinear(dJgda,dJgde,dLgda,dLgde,J-Jguess,L-Lguess)
 
-        Eguess,Lguess,dEda,dEde,dLda,dLde = dEdLFromRpRa(ψ,dψ,d2ψ,rpguess,raguess,da=0.0001,de=0.0001,TOLECC=TOLECC)
-
-        jacobian = [dEda dEde ; dLda dLde]
-        increment = jacobian \ (-([Eguess;Lguess] - [E ; L]))
-
-        aguess,eccguess = aguess + increment[1],eccguess + increment[2]
-
-        # if bad guesses, needs to reset to a different part of space
-        # can't go too small
-        if eccguess < TOLECC
-            # go halfway between the previous guess and 0.
-            eccguess = eccguess - increment[2]
-            eccguess = 0.5*eccguess
-        end
-
-        if eccguess >= 1.0-0.000001
-            # go halfway between the previous guess and 1.
-            eccguess = eccguess - increment[2]
-            eccguess = eccguess + 0.5*(1-eccguess)
-        end
-
-        if aguess < 0.00000001
-            aguess = 0.00000001
-        end
-
-        if (VERBOSE>0)
-            println("iter=",iter," aguess=",aguess," eguess=",eccguess)
-        end
-
-        iter += 1
-        if iter > maxiter
+        # If non inversible
+        if (increment1 == 0.) && (increment2 == 0.)
             break
+        end
+
+        #println("da=$increment1, de=$increment2")
+
+        # Update guesses
+        anew, enew = nextguess(aguess,eguess,increment1,increment2)
+        aguess, eguess = anew, enew
+
+        Jguess, Lguess, dJgda, dLgda, dJgde, dLgde = ComputeActionsAEWithDeriv(ψ,dψ,d2ψ,d3ψ,aguess,eguess,da,de,TOLA,TOLECC,NINT)
+
+        tol = (Jguess - J)^2 + (Lguess - L)^2
+        if (tol < (invε)^2)
+            return aguess, eguess, iter, tol
         end
     end
 
-    return aguess,eccguess
+    return aguess,eguess,ITERMAX,tol
 end

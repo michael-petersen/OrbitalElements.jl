@@ -1,14 +1,15 @@
 
 
 """
+    HenonJFromAE(ψ,dψ,d2ψ,d3ψ,a,e,NINT,TOLECC)
 
 compute the radial action alone
 """
 function HenonJFromAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
-                      a::Float64,e::Float64;
-                      NINT::Int64=32)::Float64 where {F0  <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
+                      a::Float64,e::Float64,
+                      NINT::Int64,TOLECC::Float64)::Float64 where {F0  <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
-    u1func(u::Float64)::Float64 = drdu(u,a,e)*Vrad(ψ,dψ,d2ψ,d3ψ,u,a,e)
+    u1func(u::Float64)::Float64 = drdu(u,a,e)*Vrad(ψ,dψ,d2ψ,d3ψ,u,a,e,TOLECC)
 
     return (1/pi)*UnitarySimpsonIntegration(u1func,NINT)
 end
@@ -36,19 +37,19 @@ function αβHenonΘAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
     elseif (1.0-tole) < e < 1.
         # No taylor expansion for this radial orbits case
         # β fixed at 0.5 quite poor approximation (especially for derivatives)
-        # → linear interpolation between 1/2 (e=1) and value at e=1.0-params.TOLECC
+        # → linear interpolation between 1/2 (e=1) and value at e=1.0-TOLECC
         # βtole (quasi-radial)
         etole = 1.0 - tole
-        αtole, βtole = αβHenonΘAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,etole,params)
+        αtole, βtole = αβHenonΘAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,etole,TOLA,TOLECC,NINT,EDGE,Ω₀)
         # For α value in e = 1. depends on the potential (non trivial dependence).
         # The value computed through Θ integration in e = 1. is not absurd
         # Taking linear interpolation between 1-tole and 1 prevents
         # huge error on the α(e) curve's slope (hence better for the derivatives)
         erad = 1.0
-        αrad, βrad = αβHenonΘAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,erad,params)
+        αrad, βrad = αβHenonΘAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,erad,TOLA,TOLECC,NINT,EDGE,Ω₀)
 
         e2tole = 1.0 - 2*tole
-        α2tole, β2tole = αβHenonΘAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e2tole,params)
+        α2tole, β2tole = αβHenonΘAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e2tole,TOLA,TOLECC,NINT,EDGE,Ω₀)
 
         # Interpolation
         α = Interpolation2ndOrder(e,e2tole,α2tole,etole,αtole,erad,αrad)
@@ -67,7 +68,7 @@ function αβHenonΘAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
         # this doesn't throw any allocations, so don't worry about that!
         function u2func(u::Float64)::Tuple{Float64,Float64}
             # push integration forward on three different quantities: Θ(u),Θ(u)/r^2(u)
-            Θ = ΘAE(ψ,dψ,d2ψ,d3ψ,u,a,e,TOLECC,EDGE)
+            Θ = ΘAE(ψ,dψ,d2ψ,d3ψ,u,a,e,TOLA,TOLECC,EDGE)
 
             return Θ, Θ/(ru(u,a,e)^2)
         end
@@ -78,7 +79,7 @@ function αβHenonΘAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
         #return the values
         invα = (Ω₀/pi)*accum1
         α    = 1.0/invα
-        β = (e == 1.) ? 0.5 : (LFromAE(ψ,dψ,d2ψ,d3ψ,a,e,params)/pi)*accum2
+        β = (e == 1.) ? 0.5 : (LFromAE(ψ,dψ,d2ψ,d3ψ,a,e,TOLA,TOLECC)/pi)*accum2
 
         return α, β
 
@@ -88,16 +89,18 @@ end
 
 
 """
-    DαβHenonΘAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
+    DαβHenonΘAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,da,de,TOLA,TOLECC,NINT,EDGE,Ω₀)
+
 use the defined function Θ(u) to compute frequency ratios integrals
 AND DERIVATIVES
 """
 function DαβHenonΘAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
                      a::Float64,e::Float64,
                      da::Float64=1.0e-6,de::Float64=1.0e-6,
-                     NINT::Int64=32,EDGE::Float64=0.01,TOLA::Float64=0.001,TOLECC::Float64=0.001,Ω₀::Float64=1.0)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
+                     TOLA::Float64=0.001,TOLECC::Float64=0.001,
+                     NINT::Int64=32,EDGE::Float64=0.01,
+                     Ω₀::Float64=1.0)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
-    Ω₀ = params.Ω₀
     tole = EccentricityTolerance(a,TOLA,TOLECC)
     # Numerical derivative points
     ap, da, ep, de = NumDerivPoints(a,e,da,de,TOLA,tole)
@@ -157,8 +160,8 @@ function DαβHenonΘAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
             # 5. ∂Θ/∂a/r^2                  → ∂β∂a
             # 6. (∂Θ/∂e - 2af(u)Θ/r )/r^2   → ∂β∂e
 
-            Θ = ΘAE(ψ,dψ,d2ψ,d3ψ,u,a,e,TOLECC,NINT,EDGE,Ω₀)
-            ∂Θ∂a, ∂Θ∂e = dΘAE(ψ,dψ,d2ψ,d3ψ,u,a,e,TOLECC,NINT,EDGE,Ω₀)
+            Θ = ΘAE(ψ,dψ,d2ψ,d3ψ,u,a,e,TOLA,TOLECC,EDGE)
+            ∂Θ∂a, ∂Θ∂e = dΘAE(ψ,dψ,d2ψ,d3ψ,u,a,e,da,de,TOLA,TOLECC,EDGE)
 
             r = ru(u,a,e)
 
@@ -167,12 +170,12 @@ function DαβHenonΘAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
                     ∂Θ∂a,
                     ∂Θ∂e,
                     ∂Θ∂a/(r^2),
-                    (∂Θ∂e - 2.0*a*henonf(u)*Θ/r)/r^2)
+                    (∂Θ∂e - 2.0*a*henon_f(u)*Θ/r)/r^2)
         end
 
         accum1,accum2,accum3,accum4,accum5,accum6 = UnitarySimpsonIntegration(u6func,NINT)
 
-        _, Lval, _, ∂L∂a, _, ∂L∂e = dELFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
+        _, Lval, _, ∂L∂a, _, ∂L∂e = dELFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLA,TOLECC)
 
         # α
         invα = (Ω₀/pi)*accum1
@@ -194,16 +197,19 @@ function DαβHenonΘAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
 end
 
 """
-DFrequenciesHenonΘAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
+    DFrequenciesHenonΘAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,da,de,TOLA,TOLECC,NINT,EDGE,Ω₀)
+
 use the defined function Θ(u) to compute frequency integrals
 AND DERIVATIVES
 """
 function DFrequenciesHenonΘAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
                               a::Float64,e::Float64,
-                              params::OrbitsParameters)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
+                              da::Float64=1.0e-6,de::Float64=1.0e-6,
+                              TOLA::Float64=0.001,TOLECC::Float64=0.001,
+                              NINT::Int64=32,EDGE::Float64=0.01,
+                              Ω₀::Float64=1.0)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
-    Ω₀ = params.Ω₀
-    α, β, ∂α∂a, ∂β∂a, ∂α∂e, ∂β∂e = DαβHenonΘAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
+    α, β, ∂α∂a, ∂β∂a, ∂α∂e, ∂β∂e = DαβHenonΘAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,da,de,TOLA,TOLECC,NINT,EDGE,Ω₀)
 
     Ω1, Ω2          = FrequenciesFromαβ(α,β,Ω₀)
     ∂Ω1∂a, ∂Ω2∂a    = FrequenciesDerivsFromαβDerivs(α,β,∂α∂a,∂β∂a,Ω₀)

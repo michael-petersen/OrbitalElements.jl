@@ -149,7 +149,6 @@ end
 
 Θ, the anomaly for computing orbit averages as a function of (a,e)
 equivalent to Θ = (dr/du)(1/Vrad)
-
 """
 function ΘAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
              u::Float64,a::Float64,e::Float64,
@@ -237,32 +236,32 @@ end
 
 
 """
-    ΘAEdade(ψ,dψ,d2ψ,d3ψ,u,a,e,da,de,TOLA,TOLECC,EDGE)
+    dΘAE(ψ,dψ,d2ψ,d3ψ,u,a,e,da,de,TOLA,TOLECC,EDGE)
 
 numerical differentiation of Θ w.r.t. semimajor axis and eccentricity
 
 
 """
-function ΘAEdade(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
-                 u::Float64,a::Float64,e::Float64,
-                 da::Float64=1.0e-8,de::Float64=1.0e-8,
-                 TOLA::Float64=0.001,TOLECC::Float64=ELTOLECC,
-                 EDGE::Float64=0.01)::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
+function dΘAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
+              u::Float64,a::Float64,e::Float64,
+              da::Float64=1.0e-8,de::Float64=1.0e-8,
+              TOLA::Float64=0.001,TOLECC::Float64=ELTOLECC,
+              EDGE::Float64=0.01)::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
-    # derivative w.r.t. semimajor axis: always safe
-    thHa = ΘAE(ψ,dψ,d2ψ,d3ψ,u,a+da,e,TOLA,TOLECC,EDGE)
-    thLa = ΘAE(ψ,dψ,d2ψ,d3ψ,u,a   ,e,TOLA,TOLECC,EDGE)
-    dΘda = (thHa-thLa)/da
+    # Numerical derivative points
+    ap, da, ep, de = NumDerivPoints(a,e,da,de,TOLA,TOLECC)
 
-    # derivative w.r.t. semimajor axis: safe unless too close to e=1
-    # in that case, reverse de
-    if e>(1-de)
-        de *= -1
-    end
+    # current point
+    Θloc = ΘAE(ψ,dψ,d2ψ,d3ψ,u,a   ,e,TOLA,TOLECC,EDGE)
 
-    thHe = ΘAE(ψ,dψ,d2ψ,d3ψ,u,a,e+de,TOLA,TOLECC,EDGE)
-    thLe = thLa # use the equivalency of the cross terms
-    dΘde = (thHe-thLe)/de
 
-    return dΘda,dΘde
+    Θap  = ΘAE(ψ,dψ,d2ψ,d3ψ,u,ap,e,TOLA,TOLECC,EDGE)
+
+
+    Θep  = ΘAE(ψ,dψ,d2ψ,d3ψ,u,a,ep,TOLA,TOLECC,EDGE)
+
+    ∂Θ∂a = (Θap-Θloc)/da
+    ∂Θ∂e = (Θep-Θloc)/de
+
+    return ∂Θ∂a, ∂Θ∂e
 end

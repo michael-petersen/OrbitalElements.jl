@@ -19,7 +19,9 @@ Strategies:
 #
 ########################################################################
 
-"""Ω1circular(dψ,d2ψ,a)
+"""
+    Ω1circular(dψ,d2ψ,a)
+
 radial frequency for circular orbits, from the epicyclic approximation
 a is the semi-major axis (equivalent to r for a circular orbit)
 """
@@ -33,7 +35,9 @@ function Ω1circular(dψ::F1,d2ψ::F2,
     end
 end
 
-"""Ω1circular(dψ,d2ψ,d3ψ,d4ψ,a,e)
+"""
+    Ω1circular(dψ,d2ψ,d3ψ,d4ψ,a,e)
+
 radial frequency for nearly circular orbits, from Taylor expansion
 """
 function Ω1circular(dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
@@ -50,6 +54,7 @@ function Ω1circular(dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
     dψa, d2ψa, d3ψa, d4ψa = dψ(a), d2ψ(a), d3ψ(a), d4ψ(a)
 
     # 2nd order Taylor expansion of Omega_1 w.r.t. eccentricity
+    zeroorder   = Ω1c
     # WARNING !!
     # Right operators ar the end of the previous line
     # Very important ! (otherwise some operations might not be done)
@@ -65,7 +70,8 @@ function Ω1circular(dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
 end
 
 
-"""dΩ1circular(dψ,d2ψ,d3ψ,a)
+"""
+    dΩ1circular(dψ,d2ψ,d3ψ,a)
 """
 function dΩ1circular(dψ::F1,d2ψ::F2,d3ψ::F3,
                       a::Float64)::Float64 where {F1 <: Function, F2 <: Function, F3 <: Function}
@@ -76,7 +82,9 @@ function dΩ1circular(dψ::F1,d2ψ::F2,d3ψ::F3,
 
 end
 
-"""αcircular(dψ,d2ψ,d3ψ,d4ψ,a,e,Ω₀)
+"""
+    αcircular(dψ,d2ψ,d3ψ,d4ψ,a,e,Ω₀)
+
 radial frequency for circular orbits normalised by Ω₀
 """
 function αcircular(dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
@@ -93,7 +101,9 @@ function αcircular(dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
 #
 ########################################################################
 
-"""Ω2circular(dψ,r)
+"""
+    Ω2circular(dψ,r)
+
 azimuthal frequency for circular orbits, from the epicyclic approximation
 
 @IMPROVE: Taylor expansion in a -> 0+ (need 2nd and 4th derivative)
@@ -104,7 +114,9 @@ function Ω2circular(dψ::Function,
     return sqrt(dψ(a)/a)
 end
 
-"""Ω2circular(dψ,d2ψ,r)
+"""
+    Ω2circular(dψ,d2ψ,r)
+
 azimuthal frequency for circular orbits, from the epicyclic approximation
 with value at a = 0.
 """
@@ -119,7 +131,8 @@ function Ω2circular(dψ::F1,d2ψ::F1,
 end
 
 
-"""dΩ2circular(dψ,d2ψ,d3ψ,a)
+"""
+    dΩ2circular(dψ,d2ψ,d3ψ,a)
 """
 function dΩ2circular(dψ::F1,d2ψ::F2,d3ψ::F3,
                      a::Float64)::Float64 where {F1 <: Function, F2 <: Function, F3 <: Function}
@@ -132,7 +145,9 @@ end
 
 
 
-"""βcircular2ndorderExpansionCoefs(ψ,dψ,d2ψ,d3ψ,d4ψ,a)
+"""
+    βcircular2ndorderExpansionCoefs(ψ,dψ,d2ψ,d3ψ,d4ψ,a)
+
 Coefficients of the second-order expansion of β = Ω2/Ω1 near a circular orbit
 
 """
@@ -161,7 +176,9 @@ function βcircular2ndorderExpansionCoefs(dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
     return L0 * βoverL0, 0., L0 * βoverL2 + L2 * βoverL0
 end
 
-"""βcircular(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e)
+"""
+    βcircular(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e)
+
 Second-order expansion of β = Ω2/Ω1 near a circular orbit
 """
 function βcircular(dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
@@ -173,13 +190,15 @@ function βcircular(dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
 end
 
 
-"""βcirc(αcirc, dψ,d2ψ[, Ω₀, rmax])
+"""
+    βcirc(αcirc,dψ,d2ψ,Ω₀,rmin,rmax)
+
 return βc(α), the frequency ratio Ω2/Ω1 as a function of α = Ω1/Ω₀ .
 
 """
 function βcirc(αcirc::Float64,
                dψ::F1,d2ψ::F2,
-               Ω₀::Float64=1.;
+               Ω₀::Float64=1.,
                rmin::Float64=1.0e-8,rmax::Float64=10000.)::Float64 where {F1 <: Function, F2 <: Function}
 
     # compute the radial frequency for a circular orbit
@@ -202,14 +221,16 @@ end
 #
 ########################################################################
 
-"""RcircFromΩ1circ(Ω₁,dψ,d2ψ[, rmin, rmax])
+"""
+    RcircFromΩ1circ(Ω₁,dψ,d2ψ,rmin,rmax,tolx,tolf)
+
 perform backwards mapping from Omega_1 for a circular orbit to radius
 
 can tune [rmin,rmax] for extra optimisation (but not needed)
 @WARNING: important assumption Ω1circular is a decreasing function of radius
 """
 function RcircFromΩ1circ(ω::Float64,
-                         dψ::F1,d2ψ::F2;
+                         dψ::F1,d2ψ::F2,
                          rmin::Float64=1.0e-8,rmax::Float64=10000.0,
                          tolx::Float64=1000.0*eps(Float64),tolf::Float64=1000.0*eps(Float64))::Float64 where {F1 <: Function, F2 <: Function}
 
@@ -240,7 +261,9 @@ function RcircFromΩ1circ(ω::Float64,
 end
 
 
-"""RcircFromΩ2circ(Ω₂,dψ,d2ψ[, rmin, rmax])
+"""
+    RcircFromΩ2circ(Ω₂,dψ,d2ψ,rmin,rmax)
+
 perform backwards mapping from Omega_2 for a circular orbit to radius
 
 @ASSUMPTIONS:
@@ -249,7 +272,7 @@ perform backwards mapping from Omega_2 for a circular orbit to radius
 """
 function RcircFromΩ2circ(ω::Float64,
                          dψ::F1,
-                         d2ψ::F2;
+                         d2ψ::F2,
                          rmin::Float64=1.0e-8,
                          rmax::Float64=10000.0)::Float64 where {F1 <: Function, F2 <: Function}
 

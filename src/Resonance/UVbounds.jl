@@ -2,8 +2,10 @@
 
 """
 
-"""Getϖ(ω₀,n₁,n₂,dψ/dr,d²ψ/dr²[,Ω₀,rmin,rmax])
-translate a complex frequency into a rescale frequency.
+"""
+    Getϖ(ω₀,n₁,n₂,dψ,d2ψ,Ω₀,rmin,rmax)
+
+translate a complex frequency into a rescaled frequency.
 maps ``\\omega \\to [-1,1]``
 
 Fouvry & Prunet B3
@@ -13,10 +15,10 @@ Fouvry & Prunet B3
 """
 function Getϖ(ω::Complex{Float64},
               n1::Int64,n2::Int64,
-              dψ::Function,d2ψ::Function;
+              dψ::F1,d2ψ::F2,
               Ω₀::Float64=1.,
               rmin::Float64=1.e-10,
-              rmax::Float64=1000.)
+              rmax::Float64=1000.)::ComplexF64 where {F1 <: Function, F2 <: Function}
 
     ωmin, ωmax = Findωminωmax(n1,n2,dψ,d2ψ;Ω₀=Ω₀,rmin=rmin,rmax=rmax)
 
@@ -24,64 +26,68 @@ function Getϖ(ω::Complex{Float64},
 end
 
 """
+    Getϖ(ω,ωmin,ωmax)
+
 ϖ version with ωmin, ωmax
 
 """
 function Getϖ(ω::Complex{Float64},
-              ωmin::Float64,ωmax::Float64)
+              ωmin::Float64,ωmax::Float64)::ComplexF64
 
     return (2.0*ω - ωmax - ωmin)/(ωmax - ωmin)
 end
 
 
+"""
+    Findωminωmax(n₁,n₂,dψ,d2ψ,αmin,αmax,Ω₀,rmin,rmax)
 
-########################################################################
-#
-# (u,v) mapping : ω boundaries (at given n1, n2)
-#
-########################################################################
-
-"""Findωminωmax(n₁,n₂,dψ,d2ψ[,rmax,Ω₀])
 for a given resonance, find the maximum frequencies
 
 @ASSUMPTION:
     - Frenquency domain truncated at αmin and αmax
 """
 function Findωminωmax(n1::Int64,n2::Int64,
-                      dψ::Function,
-                      d2ψ::Function,
-                      αmin::Float64,αmax::Float64;
+                      dψ::F1,d2ψ::F2,
+                      αmin::Float64,αmax::Float64,
                       Ω₀::Float64=1.,
                       rmin::Float64=1.0e-8,
-                      rmax::Float64=1.0e5)
+                      rmax::Float64=1.0e5)::Tuple{Float64,Float64} where {F1 <: Function, F2 <: Function}
 
     # define the function to extremise
-    ωncirc(x) = n1*Ω1circular(dψ,d2ψ,x)/Ω₀ + n2*Ω2circular(dψ,d2ψ,x)/Ω₀
+    ωncirc(x::Float64)::Float64 = n1*Ω1circular(dψ,d2ψ,x)/Ω₀ + n2*Ω2circular(dψ,d2ψ,x)/Ω₀
 
     # If rmax is infinite, bisection search on a bounded interval
-    xext = (rmax == Inf) ? ExtremiseFunctionNulCure(ωncirc,rmin,1.e8) : ExtremiseFunctionNulCure(ωncirc,rmin,rmax)
+     # @Warning: Allocating ...
+     xext = isinf(rmax) ? ExtremiseFunctionNulCure(ωncirc,rmin,1.e8) : ExtremiseFunctionNulCure(ωncirc,rmin,rmax)
 
-    # The extreme values of n.Ω is either :
-    #   - on the radial line, at α = αmin or αmax
-    #   - along the circular velocity (extreme α included)
-    ωmin,ωmax = extrema([ωncirc(xext), ωncirc(rmin), ωncirc(rmax), (n1+0.5*n2)*αmin, (n1+0.5*n2)*αmax])
-    return ωmin,ωmax
+     # The extreme values of n.Ω is either :
+     #   - on the radial line, at α = αmin or αmax
+     #   - along the circular velocity (extreme α included)
+     ωmin = min(ωncirc(xext), ωncirc(rmin), ωncirc(rmax), (n1+0.5*n2)*αmin, (n1+0.5*n2)*αmax)
+     ωmax = max(ωncirc(xext), ωncirc(rmin), ωncirc(rmax), (n1+0.5*n2)*αmin, (n1+0.5*n2)*αmax)
+
+     return ωmin, ωmax
 end
+
+"""
+    Findωminωmax(n₁,n₂,dψ,d2ψ,Ω₀,rmin,rmax)
+"""
 
 function Findωminωmax(n1::Int64,n2::Int64,
-                      dψ::Function,
-                      d2ψ::Function;
+                      dψ::F1,d2ψ::F2,
                       Ω₀::Float64=1.,
                       rmin::Float64=1.0e-8,
-                      rmax::Float64=1.0e5)
+                      rmax::Float64=1.0e5)::Tuple{Float64,Float64} where {F1 <: Function, F2 <: Function}
 
-    αmin, αmax = αminmax(dψ,d2ψ,rmin,rmax,Ω₀=Ω₀)
+    αmin, αmax = αminmax(dψ,d2ψ,rmin,rmax,Ω₀)
 
-    return Findωminωmax(n1,n2,dψ,d2ψ,αmin,αmax,Ω₀=Ω₀,rmin=rmin,rmax=rmax)
+    return Findωminωmax(n1,n2,dψ,d2ψ,αmin,αmax,Ω₀,rmin,rmax)
 end
 
 
-"""αminmax(dψ,d2ψ,rmin,rmax[, Ω₀])
+"""
+    αminmax(dψ,d2ψ,rmin,rmax,Ω₀)
+
 maximal and minimal considered radial frequencies (rescaled)
 
 @ASSUMPTION:
@@ -90,7 +96,7 @@ maximal and minimal considered radial frequencies (rescaled)
 function αminmax(dψ::Function,
                  d2ψ::Function,
                  rmin::Float64,
-                 rmax::Float64;
+                 rmax::Float64,
                  Ω₀::Float64=1.)
 
     @assert rmin < rmax "rmin >= rmax in αminmax function"
@@ -107,7 +113,8 @@ end
 #
 ########################################################################
 
-"""FindVminVmax(u,ωmin,ωmax,n₁,n₂,vbound,βc)
+"""
+    FindVminVmax(u,n₁,n₂,dψ,d2ψ,ωmin,ωmax,αmin,αmax,βc,Ω₀,rmin,rmax)
 for a given resonance, at a specific value of u, find the v coordinate boundaries.
 
 @IMPROVE, put in guards for the edges in βC
@@ -116,14 +123,13 @@ for a given resonance, at a specific value of u, find the v coordinate boundarie
 """
 function FindVminVmax(u::Float64,
                       n1::Int64,n2::Int64,
-                      dψ::Function,
-                      d2ψ::Function,
+                      dψ::F1,d2ψ::F2,
                       ωmin::Float64,ωmax::Float64,
                       αmin::Float64,αmax::Float64,
-                      βc::Function;
+                      βc::F5,
                       Ω₀::Float64=1.,
                       rmin::Float64=1.0e-8,
-                      rmax::Float64=1.0e5)
+                      rmax::Float64=1.0e5)::Tuple{Float64,Float64} where {F1 <: Function, F2 <: Function, F5 <: Function}
 
 
     # ωn(u) : value of the resonance line
@@ -217,26 +223,28 @@ function FindVminVmax(u::Float64,
     return vmin, vmax
 end
 
-"""HUFunc(u,ωmin,ωmax)
+"""
+    HUFunc(u,ωmin,ωmax)
+
 return h_n(u) = ω_n(u), a helper quantity
 Fouvry & Prunet B8
 """
-function HUFunc(u::Float64,
-                ωmin::Float64,ωmax::Float64)
+function HUFunc(u::Float64,ωmin::Float64,ωmax::Float64)::Float64
 
     return 0.5*(ωmax+ωmin + u*(ωmax-ωmin))
 end
 
 
-"""FindVbound(n₁,n₂,dψ,d2ψ[,rmax,Ω₀])
-find any valie non- 0 or 1 v value at u=-1 or u=1
+"""
+    FindVbound(n₁,n₂,dψ,d2ψ,Ω₀,rmin,rmax)
+
+find any valid non- 0 or 1 v value at u=-1 or u=1
 """
 function FindVbound(n1::Int64,n2::Int64,
-                    dψ::Function,
-                    d2ψ::Function;
+                    dψ::F1,d2ψ::F2,
                     Ω₀::Float64=1.,
                     rmin::Float64=1.0e-8,
-                    rmax::Float64=1.0e5)
+                    rmax::Float64=1.0e5)::Float64 where {F1 <: Function, F2 <: Function}
 
     # define the function to extremise
     ωncirc(x) = n1*Ω1circular(dψ,d2ψ,x) + n2*Ω2circular(dψ,d2ψ,x)

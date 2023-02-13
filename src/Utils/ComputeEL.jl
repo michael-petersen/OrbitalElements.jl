@@ -17,7 +17,7 @@ Ecirc(ψ,dψ,a,e)
 EcircExpansion(ψ,dψ,d2ψ,d3ψ,a,e)
 Lcirc(dψ,a)
 Lcirc2ndorderExpansionCoefs(dψ,d3ψ,a)
-LcircExpansion(ψ,dψ,d2ψ,d3ψ,a,e)
+LcircExpansion(dψ,d3ψ,a,e)
 dELFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLA,TOLECC)
 dELcircExpansion(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e)
 JacELToAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLA,TOLECC)
@@ -86,7 +86,7 @@ function LFromAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
     tole = EccentricityTolerance(a,TOLA,TOLECC)
     if e <= tole
         # switch to the expanded case
-        return LcircExpansion(ψ,dψ,d2ψ,d3ψ,a,e)
+        return LcircExpansion(dψ,d3ψ,a,e)
     elseif (e == 1.) # up to numerical precision
         return 0.0
     else
@@ -108,7 +108,7 @@ function ELFromAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
     tole = EccentricityTolerance(a,TOLA,TOLECC)
     if e <= tole
         # switch to the expanded case
-        return EcircExpansion(ψ,dψ,d2ψ,d3ψ,a,e),LcircExpansion(ψ,dψ,d2ψ,d3ψ,a,e)
+        return EcircExpansion(ψ,dψ,d2ψ,d3ψ,a,e),LcircExpansion(dψ,d3ψ,a,e)
     elseif (e == 1.) # up to numerical precision
         return Erad(ψ,a),0.0
     else
@@ -189,17 +189,17 @@ coefficients of the second-order expansion of angular momentum equation near a c
 function Lcirc2ndorderExpansionCoefs(dψ::F1,d3ψ::F3,
                                      a::Float64)::Tuple{Float64,Float64,Float64} where {F1 <: Function, F3 <: Function}
 
-    Lcirc = Lcirc(dψ,a)
-    return Lcirc, 0., ((a)^(5)*d3ψ(a)/(12*Lcirc) - Lcirc)
+    Lval = Lcirc(dψ,a)
+    return Lval, 0., ((a)^(5)*d3ψ(a)/(12*Lval) - Lval)
 end
 
 """
-    LcircExpansion(ψ,dψ,d2ψ,d3ψ,a,e)
+    LcircExpansion(dψ,d3ψ,a,e)
 
 second-order expansion of angular momentum equation near a circular orbit
 """
-function LcircExpansion(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
-                        a::Float64,e::Float64)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
+function LcircExpansion(dψ::F1,d3ψ::F3,
+                        a::Float64,e::Float64)::Float64 where {F1 <: Function, F3 <: Function}
 
     # compute the Taylor expansion of L
     zeroorder, firstorder, secondorder = Lcirc2ndorderExpansionCoefs(dψ,d3ψ,a)
@@ -338,4 +338,42 @@ function ELFromRpRa(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
     L = LFromAE(ψ,dψ,d2ψ,d3ψ,a,e,TOLA,TOLECC)
 
     return E, L
+end
+
+
+"""
+    RcircFromL(L,dψ,rmin,rmax,tolx,tolf)
+perform backwards mapping from L for a circular orbit to radius
+can tune [rmin,rmax] for extra optimisation (but not needed)
+@WARNING: important assumption Ω1circular is a decreasing function of radius
+"""
+function RcircFromL(L::Float64,
+                    dψ::F1,
+                    rmin::Float64,rmax::Float64,
+                    tolx::Float64=1000.0*eps(Float64),tolf::Float64=1000.0*eps(Float64))::Float64 where {F1 <: Function}
+
+    # check that the input frequency is valid
+    if L  < 0.
+        error("OrbitalElements.Utils.RcircFromL: Negative angular momentum L = $L")
+        return -1.
+    elseif L == 0.
+        return 0.
+    else
+        # use bisection to find the circular orbit radius corresponding to given frequency
+        rcirc = try bisection(r -> L - Lcirc(dψ,r),rmin,rmax,tolx=tolx,tolf=tolf) catch;   -1. end
+
+        # check if bisection failed: report why
+        if (rcirc == -1.)
+            if (Lcirc(dψ,rmax) < L)
+                return RcircFromL(L,dψ,rmax,10*rmax,tolx,tolf)
+            elseif (L < Lcirc(dψ,rmin))
+                return RcircFromL(L,dψ,rmin/10,rmin,tolx,tolf)
+            else
+                error("OrbitalElements.Utils.RcircFromL: Unable to find the associated radius of L = $L")
+                return -1.
+            end
+        end
+
+        return rcirc
+    end
 end

@@ -1,6 +1,7 @@
 
 
-"""αβFromUV(u,v,n1,n2,ωmin,ωmax)
+"""
+    αβFromUV(u,v,n1,n2,ωmin,ωmax)
 
 mapping from (α,β) to (u,v)
 
@@ -11,7 +12,7 @@ This signature specifies ωmin and ωmax, to avoid extra calls.
 """
 function αβFromUV(u::Float64,v::Float64,
                   n1::Int64,n2::Int64,
-                  ωmin::Float64,ωmax::Float64)
+                  ωmin::Float64,ωmax::Float64)::Float64
 
     if n2 == 0
         β  = v
@@ -25,7 +26,8 @@ function αβFromUV(u::Float64,v::Float64,
 end
 
 
-"""UVFromαβ(α,β,n1,n2,ωmin,ωmax)
+"""
+    UVFromαβ(α,β,n1,n2,ωmin,ωmax)
 
 mapping from  (u,v) to (α,β), from Fouvry & Prunet Appendix B
 
@@ -36,7 +38,7 @@ OrbitalElements.UVFromαβ(0.5,0.7,-3,4,OrbitalElements.isochrone_dpsi_dr,Orbita
 """
 function UVFromαβ(α::Float64,β::Float64,
                   n1::Int64,n2::Int64,
-                  ωmin::Float64,ωmax::Float64)
+                  ωmin::Float64,ωmax::Float64)::Float64
 
     # Equation B1
     ωval = n1*α + n2*β*α
@@ -51,11 +53,13 @@ function UVFromαβ(α::Float64,β::Float64,
 end
 
 """
+    JacαβToUV(n1,n2,ωmin,ωmax,v)
+
 using the definitions for (α, β) and (u,v), compute the Jacobian.
 @ATTENTION, to match eq. B6, this has the 2/(ωmax-ωmin) term already absorbed into it. therefore, not formally the Jacobian, but adds the dimensional removal.
 @ATTENTION, hypothesis ωmin < ωmax
 """
-function JacαβToUV(n1::Int64,n2::Int64,ωmin::Float64,ωmax::Float64,v::Float64)
+function JacαβToUV(n1::Int64,n2::Int64,ωmin::Float64,ωmax::Float64,v::Float64)::Float64
 
     return (n2==0) ? 1.0 / abs(n1) : 1.0 / abs(n2*v)
 end
