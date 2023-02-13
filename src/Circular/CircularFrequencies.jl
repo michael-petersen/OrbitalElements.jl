@@ -120,7 +120,7 @@ end
 azimuthal frequency for circular orbits, from the epicyclic approximation
 with value at a = 0.
 """
-function Ω2circular(dψ::F1,d2ψ::F1,
+function Ω2circular(dψ::F1,d2ψ::F2,
                     a::Float64)::Float64 where {F1 <: Function, F2 <: Function}
 
     if (a == 0.)
@@ -205,7 +205,7 @@ function βcirc(αcirc::Float64,
     Ω1 = Ω₀ * αcirc
 
     # get the radius corresponding to the circular orbit
-    rcirc = RcircFromΩ1circ(Ω1,dψ,d2ψ;rmin=rmin,rmax=rmax)
+    rcirc = RcircFromΩ1circ(Ω1,dψ,d2ψ,rmin,rmax)
 
     # get the azimuthal frequency for the radius
     Ω2 = Ω2circular(dψ,d2ψ,rcirc)
@@ -249,9 +249,9 @@ function RcircFromΩ1circ(ω::Float64,
     # check if bisection failed: report why
     if (rcirc == -1.)
         if (ω  < Ω1circular(dψ,d2ψ,rmax))
-            return RcircFromΩ1circ(ω,dψ,d2ψ;rmin=rmax,rmax=10*rmax,tolx=tolx,tolf=tolf)
+            return RcircFromΩ1circ(ω,dψ,d2ψ,rmax,10*rmax,tolx=tolx,tolf=tolf)
         elseif Ω1circular(dψ,d2ψ,rmin) < ω
-            return RcircFromΩ1circ(ω,dψ,d2ψ;rmin=rmin/10,rmax=rmin,tolx=tolx,tolf=tolf)
+            return RcircFromΩ1circ(ω,dψ,d2ψ,rmin/10,rmin,tolx=tolx,tolf=tolf)
         else
             error("OrbitalElements.Circular.RcircFromΩ1circ: Unable to find the associated radius of Ω1 = $ω")
         end
@@ -287,9 +287,9 @@ function RcircFromΩ2circ(ω::Float64,
     rcirc = try bisection(r -> ω - Ω2circular(dψ,r), rmin, rmax) catch;  -1. end
     if (rcirc == -1.)
         if (0. < ω < Ω2circular(dψ,rmax))
-            return RcircFromΩ2circ(ω,dψ,d2ψ;rmin=rmax,rmax=10*rmax)
+            return RcircFromΩ2circ(ω,dψ,d2ψ,rmax,10*rmax)
         elseif Ω2circular(dψ,rmin) < ω
-            return RcircFromΩ2circ(ω,dψ,d2ψ;rmin=rmin/10,rmax=rmin)
+            return RcircFromΩ2circ(ω,dψ,d2ψ,rmin/10,rmin)
         else
             error("OrbitalElements.Circular.RcircFromΩ2circ: Unable to find the associated radius of Ω2 = ",ω)
         end

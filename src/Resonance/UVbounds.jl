@@ -50,9 +50,8 @@ for a given resonance, find the maximum frequencies
 function Findωminωmax(n1::Int64,n2::Int64,
                       dψ::F1,d2ψ::F2,
                       αmin::Float64,αmax::Float64,
-                      Ω₀::Float64=1.,
-                      rmin::Float64=1.0e-8,
-                      rmax::Float64=1.0e5)::Tuple{Float64,Float64} where {F1 <: Function, F2 <: Function}
+                      Ω₀::Float64,
+                      rmin::Float64,rmax::Float64)::Tuple{Float64,Float64} where {F1 <: Function, F2 <: Function}
 
     # define the function to extremise
     ωncirc(x::Float64)::Float64 = n1*Ω1circular(dψ,d2ψ,x)/Ω₀ + n2*Ω2circular(dψ,d2ψ,x)/Ω₀
@@ -160,7 +159,7 @@ function FindVminVmax(u::Float64,
             branch = 1
         else
             # First look for vbound in the asked boundary
-            vbound = FindVbound(n1,n2,dψ,d2ψ,Ω₀=Ω₀,rmin=rmin,rmax=rmax)
+            vbound = FindVbound(n1,n2,dψ,d2ψ,Ω₀,rmin,rmax)
 
             # Extreme boundary to look for vbound
             # @WARNING arbitrary fixed constant
@@ -172,7 +171,7 @@ function FindVminVmax(u::Float64,
                 # If vboung not in the asked boundary
                 # verify that it should indeed not exist
                 locrmin, locrmax = min(rmin,locrmin), max(rmax,locrmax)
-                vbound = FindVbound(n1,n2,dψ,d2ψ,Ω₀=Ω₀,rmin=locrmin,rmax=locrmax)
+                vbound = FindVbound(n1,n2,dψ,d2ψ,Ω₀,locrmin,locrmax)
 
                 branch = ((vbound != Ω1circular(dψ,d2ψ,locrmin)/Ω₀) && (vbound != Ω1circular(dψ,d2ψ,locrmin)/Ω₀)) ? 2 : 1
             else

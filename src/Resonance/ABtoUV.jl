@@ -12,7 +12,7 @@ This signature specifies ωmin and ωmax, to avoid extra calls.
 """
 function αβFromUV(u::Float64,v::Float64,
                   n1::Int64,n2::Int64,
-                  ωmin::Float64,ωmax::Float64)::Float64
+                  ωmin::Float64,ωmax::Float64)::Tuple{Float64,Float64}
 
     if n2 == 0
         β  = v
@@ -38,7 +38,7 @@ OrbitalElements.UVFromαβ(0.5,0.7,-3,4,OrbitalElements.isochrone_dpsi_dr,Orbita
 """
 function UVFromαβ(α::Float64,β::Float64,
                   n1::Int64,n2::Int64,
-                  ωmin::Float64,ωmax::Float64)::Float64
+                  ωmin::Float64,ωmax::Float64)::Tuple{Float64,Float64}
 
     # Equation B1
     ωval = n1*α + n2*β*α
