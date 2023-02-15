@@ -6,8 +6,8 @@ And more importantly, what is the full list of arguments?
 - FrequenciesFromαβ(α,β,Ω₀)
 - FrequenciesDerivsFromαβDerivs(α,β,dα,dβ,Ω₀)
 - αβFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLA,TOLECC,NINT,EDGE,Ω₀)
-- ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLA,TOLECC,NINT,EDGE)
-- ComputeFrequenciesJAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLA,TOLECC,NINT,EDGE)
+- ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLA,TOLECC,NINT,EDGE,Ω₀)
+- ComputeFrequenciesJAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLA,TOLECC,NINT,EDGE,Ω₀)
 - ComputeαβWithDerivAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,da,de,TOLA,TOLECC,VERBOSE,NINT,EDGE,Ω₀)
 - ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,da,de,TOLA,TOLECC,NINT,EDGE,Ω₀)
 - ComputeActionsAE(ψ,dψ,d2ψ,d3ψ,a,e,TOLA,TOLECC,NINT)
@@ -33,7 +33,7 @@ And more importantly, what is the full list of arguments?
 
 ### Henon/Frequencies.jl:
 If one wanted to write a new frequency anomaly, this is the template to use.
-- HenonJFromAE(ψ,dψ,d2ψ,d3ψ,a,e,NINT,TOLECC)
+- HenonJFromAE(ψ,dψ,d2ψ,d3ψ,a,e,NINT,TOLA,TOLECC)
 - αβHenonΘAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLA,TOLECC,NINT,EDGE,Ω₀)
 - DαβHenonΘAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,da,de,TOLA,TOLECC,NINT,EDGE,Ω₀)
 - DFrequenciesHenonΘAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,da,de,TOLA,TOLECC,NINT,EDGE,Ω₀)
@@ -50,8 +50,11 @@ If one wanted to write a new frequency anomaly, this is the template to use.
 - dψeffdr(dψ,r,L)
 - d2ψeffdr2(d2ψ,r,L)
 - ΘAE(ψ,dψ,d2ψ,d3ψ,u,a,e,TOLA,TOLECC,EDGE)
+- ΘAE(ψ,dψ,d2ψ,d3ψ,u,a,e,params)
 - ΘExpansionAE(ψ,dψ,d2ψ,d3ψ,u,a,e,TOLA,TOLECC)
+- ΘExpansionAE(ψ,dψ,d2ψ,d3ψ,u,a,e,params)
 - dΘAE(ψ,dψ,d2ψ,d3ψ,u,a,e,da,de,TOLA,TOLECC,EDGE)
+- dΘAE(ψ,dψ,d2ψ,d3ψ,u,a,e,params)
 
 ### Resonance/ABtoUV.jl:
 - αβFromUV(u,v,n1,n2,ωmin,ωmax)
@@ -59,18 +62,24 @@ If one wanted to write a new frequency anomaly, this is the template to use.
 - JacαβToUV(n1,n2,ωmin,ωmax,v)
 
 ### Resonance/UVbounds.jl:
-- Getϖ(ω₀,n₁,n₂,dψ,d2ψ,Ω₀,rmin,rmax)
+- Getϖ(ω,n1,n2,dψ,d2ψ,Ω₀,rmin,rmax)
+- Getϖ(ω,n1,n2,dψ,d2ψ,params)
 - Getϖ(ω,ωmin,ωmax)
-- Findωminωmax(n₁,n₂,dψ,d2ψ,αmin,αmax,Ω₀,rmin,rmax)
-- FindVminVmax(u,n₁,n₂,dψ,d2ψ,ωmin,ωmax,αmin,αmax,βc,Ω₀,rmin,rmax)
+- Findωminωmax(n1,n2,dψ,d2ψ,αmin,αmax,Ω₀,rmin,rmax)
+- Findωminωmax(n1,n2,dψ,d2ψ,params)
+- FindVminVmax(u,n1,n2,dψ,d2ψ,ωmin,ωmax,αmin,αmax,βc,Ω₀,rmin,rmax)
+- FindVminVmax(u,n1,n2,dψ,d2ψ,ωmin,ωmax,βc,params)
 - HUFunc(u,ωmin,ωmax)
-- FindVbound(n₁,n₂,dψ,d2ψ,Ω₀,rmin,rmax)
+- FindVbound(n2,n2,dψ,d2ψ,Ω₀,rmin,rmax)
 
 ### Utils/ComputeEL.jl:
 - EccentricityTolerance(a,TOLA,TOLECC)
 - EFromAE(ψ,dψ,d2ψ,d3ψ,a,e,TOLA,TOLECC)
+- EFromAE(ψ,dψ,d2ψ,d3ψ,a,e,params)
 - LFromAE(ψ,dψ,d2ψ,d3ψ,a,e,TOLA,TOLECC)
+- LFromAE(ψ,dψ,d2ψ,d3ψ,a,e,params)
 - ELFromAE(ψ,dψ,d2ψ,d3ψ,a,e,TOLA,TOLECC)
+- ELFromAE(ψ,dψ,d2ψ,d3ψ,a,e,params)
 - Erad(ψ,a)
 - Ecirc(ψ,dψ,a,e)
 - EcircExpansion(ψ,dψ,d2ψ,d3ψ,a,e)
@@ -78,11 +87,16 @@ If one wanted to write a new frequency anomaly, this is the template to use.
 - Lcirc2ndorderExpansionCoefs(dψ,d3ψ,a)
 - LcircExpansion(dψ,d3ψ,a,e)
 - dELFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLA,TOLECC)
+- dELFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
 - dELcircExpansion(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e)
 - JacELToAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLA,TOLECC)
+- JacELToAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
 - EFromRpRa(ψ,dψ,d2ψ,d3ψ,rp,ra,TOLA,TOLECC)
+- EFromRpRa(ψ,dψ,d2ψ,d3ψ,rp,ra,params)
 - LFromRpRa(ψ,dψ,d2ψ,d3ψ,rp,ra,TOLA,TOLECC)
+- LFromRpRa(ψ,dψ,d2ψ,d3ψ,rp,ra,params)
 - ELFromRpRa(ψ,dψ,d2ψ,d3ψ,rp,ra,TOLA,TOLECC)
+- ELFromRpRa(ψ,dψ,d2ψ,d3ψ,rp,ra,params)
 - RcircFromL(L,dψ,rmin,rmax,tolx,tolf)
 
 ### Utils/NumericalInversion.jl:
@@ -95,4 +109,4 @@ If one wanted to write a new frequency anomaly, this is the template to use.
 - AEFromRpRa(rp,ra)
 - RpRaFromAE(a,e)
 - Ecirc(ψ,dψ,r)
-- Vrad(ψ,dψ,d2ψ,d3ψ,u,a,e,TOLECC)
+- Vrad(ψ,dψ,d2ψ,d3ψ,u,a,e,TOLA,TOLECC)

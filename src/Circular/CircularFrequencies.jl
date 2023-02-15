@@ -198,8 +198,8 @@ return βc(α), the frequency ratio Ω2/Ω1 as a function of α = Ω1/Ω₀ .
 """
 function βcirc(αcirc::Float64,
                dψ::F1,d2ψ::F2,
-               Ω₀::Float64=1.,
-               rmin::Float64=1.0e-8,rmax::Float64=10000.)::Float64 where {F1 <: Function, F2 <: Function}
+               Ω₀::Float64,
+               rmin::Float64,rmax::Float64)::Float64 where {F1 <: Function, F2 <: Function}
 
     # compute the radial frequency for a circular orbit
     Ω1 = Ω₀ * αcirc
@@ -222,7 +222,7 @@ end
 ########################################################################
 
 """
-    RcircFromΩ1circ(Ω₁,dψ,d2ψ,rmin,rmax,tolx,tolf)
+    RcircFromΩ1circ(Ω₁,dψ,d2ψ,rmin,rmax[,tolx,tolf])
 
 perform backwards mapping from Omega_1 for a circular orbit to radius
 
@@ -231,7 +231,7 @@ can tune [rmin,rmax] for extra optimisation (but not needed)
 """
 function RcircFromΩ1circ(ω::Float64,
                          dψ::F1,d2ψ::F2,
-                         rmin::Float64=1.0e-8,rmax::Float64=10000.0,
+                         rmin::Float64,rmax::Float64,
                          tolx::Float64=1000.0*eps(Float64),tolf::Float64=1000.0*eps(Float64))::Float64 where {F1 <: Function, F2 <: Function}
 
     # check that the input frequency is valid
@@ -273,8 +273,8 @@ perform backwards mapping from Omega_2 for a circular orbit to radius
 function RcircFromΩ2circ(ω::Float64,
                          dψ::F1,
                          d2ψ::F2,
-                         rmin::Float64=1.0e-8,
-                         rmax::Float64=10000.0)::Float64 where {F1 <: Function, F2 <: Function}
+                         rmin::Float64,
+                         rmax::Float64)::Float64 where {F1 <: Function, F2 <: Function}
 
     if ω  <= 0.
         error("OrbitalElements.Circular.RcircFromΩ2circ: Negative circular frequency Ω1 = ",ω)

@@ -36,7 +36,7 @@ vval = 0.5*(vmax-vmin) + vmin
 
 
 # select an (a,e) value for the orbit
-a,e = 0.01, 0.5
+a,e = 0.01, 1.0
 
 da,de,TOLECC,NINT,EDGE,TOLA,ITERMAX,rmin,rmax,invε,eps = 0.001,0.001,0.001,32,0.01,0.001,100,1.e-6,1.e6,1.e-10,1.e-12
 α,β = OrbitalElements.αβFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLA,TOLECC,NINT,EDGE,Ω₀)
@@ -68,14 +68,14 @@ spo,sao = OrbitalElements.SpSaFromEL(Eval,Lval, bc=bc ,M=M,G=G)
 println("sp=$spo,sa=$sao")
 
 
-Eval,Lval = OrbitalElements.ELFromAE(ψ,dψ,d2ψ,d3ψ,a,e)
+Eval,Lval = OrbitalElements.ELFromAE(ψ,dψ,d2ψ,d3ψ,a,e,TOLA,TOLECC)
 println("brute   E=$Eval,L=$Lval")
 
 u=-1.0
 testrp = OrbitalElements.RFromURpRa(u,rp,ra,bc)
 println("rp=$rp,rp=$testrp")
 
-O1,O2,Jr = OrbitalElements.ComputeFrequenciesJAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLA,TOLECC,NINT,EDGE)
+O1,O2,Jr = OrbitalElements.ComputeFrequenciesJAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLA,TOLECC,NINT,EDGE,Ω₀)
 println("Generic  O1=$O1,O2=$O2,Jr=$Jr")
 O1,O2,Jr = OrbitalElements.PlummerOmega12FromRpRa(rp,ra,bc,M,G,action=true)
 println("Specific O1=$O1,O2=$O2,Jr=$Jr")

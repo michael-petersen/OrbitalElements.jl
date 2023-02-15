@@ -178,6 +178,12 @@ function ΘAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
     end
 end
 
+function ΘAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
+             u::Float64,a::Float64,e::Float64,
+             params::OrbitsParameters)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
+
+    return ΘAE(ψ,dψ,d2ψ,d3ψ,u,a,e,params.TOLA,params.TOLECC,params.EDGE)
+end
 
 
 """
@@ -233,6 +239,12 @@ function ΘExpansionAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
     return pref / denom * ( zeroorder + firstorder * (u - ul) + secondorder * (u - ul)^(2) )
 end
 
+function ΘExpansionAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
+                      u::Float64,a::Float64,e::Float64,
+                      params::OrbitsParameters)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
+
+    return ΘExpansionAE(ψ,dψ,d2ψ,d3ψ,u,a,e,params.TOLA,params.TOLECC)
+end
 
 
 """
@@ -244,9 +256,9 @@ numerical differentiation of Θ w.r.t. semimajor axis and eccentricity
 """
 function dΘAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
               u::Float64,a::Float64,e::Float64,
-              da::Float64=1.0e-8,de::Float64=1.0e-8,
-              TOLA::Float64=0.001,TOLECC::Float64=ELTOLECC,
-              EDGE::Float64=0.01)::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
+              da::Float64,de::Float64,
+              TOLA::Float64,TOLECC::Float64,
+              EDGE::Float64)::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
     # Numerical derivative points
     ap, da, ep, de = NumDerivPoints(a,e,da,de,TOLA,TOLECC)
@@ -264,4 +276,11 @@ function dΘAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
     ∂Θ∂e = (Θep-Θloc)/de
 
     return ∂Θ∂a, ∂Θ∂e
+end
+
+function dΘAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
+              u::Float64,a::Float64,e::Float64,
+              params::OrbitsParameters)::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
+
+    return dΘAE(ψ,dψ,d2ψ,d3ψ,u,a,e,params.da,params.de,params.TOLA,params.TOLECC,params.EDGE)
 end

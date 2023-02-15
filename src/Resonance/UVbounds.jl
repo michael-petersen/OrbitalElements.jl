@@ -3,7 +3,7 @@
 """
 
 """
-    Getϖ(ω₀,n₁,n₂,dψ,d2ψ,Ω₀,rmin,rmax)
+    Getϖ(ω,n1,n2,dψ,d2ψ,Ω₀,rmin,rmax)
 
 translate a complex frequency into a rescaled frequency.
 maps ``\\omega \\to [-1,1]``
@@ -16,14 +16,22 @@ Fouvry & Prunet B3
 function Getϖ(ω::Complex{Float64},
               n1::Int64,n2::Int64,
               dψ::F1,d2ψ::F2,
-              Ω₀::Float64=1.,
-              rmin::Float64=1.e-10,
-              rmax::Float64=1000.)::ComplexF64 where {F1 <: Function, F2 <: Function}
+              Ω₀::Float64,
+              rmin::Float64,
+              rmax::Float64)::ComplexF64 where {F1 <: Function, F2 <: Function}
 
     αmin, αmax = αminmax(dψ,d2ψ,rmin,rmax,Ω₀)
-    ωmin, ωmax = Findωminωmax(n₁,n₂,dψ,d2ψ,αmin,αmax,Ω₀,rmin,rmax)
+    ωmin, ωmax = Findωminωmax(n1,n2,dψ,d2ψ,αmin,αmax,Ω₀,rmin,rmax)
 
     return Getϖ(ω,ωmin,ωmax)
+end
+
+function Getϖ(ω::ComplexF64,
+              n1::Int64,n2::Int64,
+              dψ::F1,d2ψ::F2,
+              params::OrbitsParameters)::ComplexF64 where {F1 <: Function, F2 <: Function}
+
+    return Getϖ(ω,n1,n2,dψ,d2ψ,Ω₀,rmin,rmax)
 end
 
 """
@@ -40,7 +48,7 @@ end
 
 
 """
-    Findωminωmax(n₁,n₂,dψ,d2ψ,αmin,αmax,Ω₀,rmin,rmax)
+    Findωminωmax(n1,n2,dψ,d2ψ,αmin,αmax,Ω₀,rmin,rmax)
 
 for a given resonance, find the maximum frequencies
 
@@ -69,6 +77,14 @@ function Findωminωmax(n1::Int64,n2::Int64,
      return ωmin, ωmax
 end
 
+function Findωminωmax(n1::Int64,n2::Int64,
+                      dψ::F1,d2ψ::F2,
+                      params::OrbitsParameters)::Tuple{Float64,Float64} where {F1 <: Function, F2 <: Function}
+
+    return Findωminωmax(n1,n2,dψ,d2ψ,params.αmin,params.αmax,params.Ω₀,params.rmin,params.rmax)
+end
+
+
 
 """
     αminmax(dψ,d2ψ,rmin,rmax,Ω₀)
@@ -82,7 +98,7 @@ function αminmax(dψ::Function,
                  d2ψ::Function,
                  rmin::Float64,
                  rmax::Float64,
-                 Ω₀::Float64=1.)
+                 Ω₀::Float64)
 
     @assert rmin < rmax "rmin >= rmax in αminmax function"
     # Assumption :
@@ -99,7 +115,7 @@ end
 ########################################################################
 
 """
-    FindVminVmax(u,n₁,n₂,dψ,d2ψ,ωmin,ωmax,αmin,αmax,βc,Ω₀,rmin,rmax)
+    FindVminVmax(u,n1,n2,dψ,d2ψ,ωmin,ωmax,αmin,αmax,βc,Ω₀,rmin,rmax)
 for a given resonance, at a specific value of u, find the v coordinate boundaries.
 
 @IMPROVE, put in guards for the edges in βC
@@ -112,9 +128,9 @@ function FindVminVmax(u::Float64,
                       ωmin::Float64,ωmax::Float64,
                       αmin::Float64,αmax::Float64,
                       βc::F5,
-                      Ω₀::Float64=1.,
-                      rmin::Float64=1.0e-8,
-                      rmax::Float64=1.0e5)::Tuple{Float64,Float64} where {F1 <: Function, F2 <: Function, F5 <: Function}
+                      Ω₀::Float64,
+                      rmin::Float64,
+                      rmax::Float64)::Tuple{Float64,Float64} where {F1 <: Function, F2 <: Function, F5 <: Function}
 
 
     # ωn(u) : value of the resonance line
@@ -208,6 +224,17 @@ function FindVminVmax(u::Float64,
     return vmin, vmax
 end
 
+function FindVminVmax(u::Float64,
+                      n1::Int64,n2::Int64,
+                      dψ::F1,d2ψ::F2,
+                      ωmin::Float64,ωmax::Float64,
+                      βc::F5,
+                      params::OrbitsParameters)::Tuple{Float64,Float64} where {F1 <: Function, F2 <: Function, F5 <: Function}
+
+    return FindVminVmax(u,n1,n2,dψ,d2ψ,ωmin,ωmax,params.αmin,params.αmax,βc,params.Ω₀,params.rmin,params.rmax)
+end
+
+
 """
     HUFunc(u,ωmin,ωmax)
 
@@ -227,9 +254,9 @@ find any valid non- 0 or 1 v value at u=-1 or u=1
 """
 function FindVbound(n1::Int64,n2::Int64,
                     dψ::F1,d2ψ::F2,
-                    Ω₀::Float64=1.,
-                    rmin::Float64=1.0e-8,
-                    rmax::Float64=1.0e5)::Float64 where {F1 <: Function, F2 <: Function}
+                    Ω₀::Float64,
+                    rmin::Float64,
+                    rmax::Float64)::Float64 where {F1 <: Function, F2 <: Function}
 
     # define the function to extremise
     ωncirc(x) = n1*Ω1circular(dψ,d2ψ,x) + n2*Ω2circular(dψ,d2ψ,x)

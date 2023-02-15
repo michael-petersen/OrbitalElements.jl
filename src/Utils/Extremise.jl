@@ -71,7 +71,9 @@ function bisection(fun::Function,
 end
 
 
-"""ExtremiseFunction(fun, xl, xu [,dx, tolf,VERBOSE])
+"""
+    ExtremiseFunction(fun,xl,xu[,dx,tolf,VERBOSE])
+
 Find the single extremum of a function (with monotonic derivative) between xl and xu
 """
 function ExtremiseFunction(fun::Function,
@@ -89,7 +91,9 @@ function ExtremiseFunction(fun::Function,
     return xm
 end
 
-"""ExtremiseFunctionNulCure(fun, xl, xu [, VERBOSE])
+"""
+    ExtremiseFunctionNulCure(fun,xl,xu[,tolx,VERBOSE])
+
 Find the extremum of a function between xl and xu.
 Cure the possible nul (finite difference) derivative in xl or xu
 """

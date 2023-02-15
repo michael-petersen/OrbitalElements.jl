@@ -7,6 +7,22 @@ using Roots
 # for interpolations
 using Interpolations
 
+# recommendations for various default parameters:
+#   you can call these externally
+const DEFAULT_TOLECC = 0.001
+const DEFAULT_TOLA   = 0.001
+const DEFAULT_EDGE   = 0.01
+const DEFAULT_NINT   = 32
+const DEFAULT_RMIN   = 1.e-6
+const DEFAULT_RMAX   = 1.e6
+const DEFAULT_TOL    = 1.e-12
+const DEFAULT_AMIN   = 0.0
+const DEFAULT_AMAX   = 1.0
+const DEFAULT_DA     = 1.e-4
+const DEFAULT_DE     = 1.e-4
+const DEFAULT_ITERMAX= 100
+const DEFAULT_O0     = 1.0
+
 # utils: simple function extremisation, input/output, basic orbit coordinate transformations, simple integrators
 include("Utils/ParameterStructure.jl")
 include("Utils/Extremise.jl")
@@ -29,8 +45,6 @@ include("DistributionFunctions/miyamoto.jl")
 include("DistributionFunctions/isochrone_discs.jl")
 
 # enable energy and angular momentum computation (including expansions)
-# first, set the radius where we switch to expansions
-const ELTOLECC = 0.001
 include("Utils/ComputeEL.jl")
 
 # bring in the circular orbit frequencies

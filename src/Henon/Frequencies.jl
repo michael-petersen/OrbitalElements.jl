@@ -1,15 +1,15 @@
 
 
 """
-    HenonJFromAE(ψ,dψ,d2ψ,d3ψ,a,e,NINT,TOLECC)
+    HenonJFromAE(ψ,dψ,d2ψ,d3ψ,a,e,NINT,TOLA,TOLECC)
 
 compute the radial action alone
 """
 function HenonJFromAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
                       a::Float64,e::Float64,
-                      NINT::Int64,TOLECC::Float64)::Float64 where {F0  <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
+                      NINT::Int64,TOLA::Float64,TOLECC::Float64)::Float64 where {F0  <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
-    u1func(u::Float64)::Float64 = drdu(u,a,e)*Vrad(ψ,dψ,d2ψ,d3ψ,u,a,e,TOLECC)
+    u1func(u::Float64)::Float64 = drdu(u,a,e)*Vrad(ψ,dψ,d2ψ,d3ψ,u,a,e,TOLA,TOLECC)
 
     return (1/pi)*UnitarySimpsonIntegration(u1func,NINT)
 end
@@ -23,14 +23,13 @@ use the defined function Θ(u) to compute frequency integrals
 function αβHenonΘAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
                     a::Float64,e::Float64,
                     TOLA::Float64,TOLECC::Float64,
-                    NINT::Int64,EDGE::Float64,Ω₀::Float64=1.0)::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
+                    NINT::Int64,EDGE::Float64,Ω₀::Float64)::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
     tole = EccentricityTolerance(a,TOLA,TOLECC)
     if (e <= tole)
         # drop into circular frequency expansion calculations:
         α = αcircular(dψ,d2ψ,d3ψ,d4ψ,a,e,Ω₀)
-        β  = βcircular(dψ,d2ψ,d3ψ,d4ψ,a,e) # = Ω2/Ω1
-        #Ω2 = β*Ω1
+        β = βcircular(dψ,d2ψ,d3ψ,d4ψ,a,e) # = Ω2/Ω1
 
         return α,β
 
@@ -96,10 +95,10 @@ AND DERIVATIVES
 """
 function DαβHenonΘAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
                      a::Float64,e::Float64,
-                     da::Float64=1.0e-6,de::Float64=1.0e-6,
-                     TOLA::Float64=0.001,TOLECC::Float64=0.001,
-                     NINT::Int64=32,EDGE::Float64=0.01,
-                     Ω₀::Float64=1.0)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
+                     da::Float64,de::Float64,
+                     TOLA::Float64,TOLECC::Float64,
+                     NINT::Int64,EDGE::Float64,
+                     Ω₀::Float64)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
     tole = EccentricityTolerance(a,TOLA,TOLECC)
     # Numerical derivative points
@@ -204,10 +203,10 @@ AND DERIVATIVES
 """
 function DFrequenciesHenonΘAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
                               a::Float64,e::Float64,
-                              da::Float64=1.0e-6,de::Float64=1.0e-6,
-                              TOLA::Float64=0.001,TOLECC::Float64=0.001,
-                              NINT::Int64=32,EDGE::Float64=0.01,
-                              Ω₀::Float64=1.0)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
+                              da::Float64,de::Float64,
+                              TOLA::Float64,TOLECC::Float64,
+                              NINT::Int64,EDGE::Float64,
+                              Ω₀::Float64)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
     α, β, ∂α∂a, ∂β∂a, ∂α∂e, ∂β∂e = DαβHenonΘAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,da,de,TOLA,TOLECC,NINT,EDGE,Ω₀)
 

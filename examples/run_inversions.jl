@@ -37,7 +37,7 @@ da,de,TOLECC,NINT,EDGE,TOLA,ITERMAX,rmin,rmax,invε,eps = 0.001,0.001,0.001,32,0
 println("Exact       Ω₁=$Ω₁e, Ω₂=$Ω₂e")
 
 # compute approximate frequencies
-@time Ω₁a,Ω₂a = OrbitalElements.ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLA,TOLECC,NINT,EDGE)
+@time Ω₁a,Ω₂a = OrbitalElements.ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLA,TOLECC,NINT,EDGE,Ω₀)
 println("Approximate Ω₁=$Ω₁a, Ω₂=$Ω₂a")
 
 @time α, β, ∂α∂a, ∂β∂a, ∂α∂e, ∂β∂e = OrbitalElements.ComputeαβWithDerivAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,da,de,TOLA,TOLECC,NINT,EDGE,Ω₀)

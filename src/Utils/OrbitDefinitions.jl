@@ -42,7 +42,7 @@ end
 
 
 """
-    Vrad(ψ,dψ,d2ψ,d3ψ,u,a,e,TOLECC)
+    Vrad(ψ,dψ,d2ψ,d3ψ,u,a,e,TOLA,TOLECC)
 
 vr, radial velocity for computing action
 as a function of (a,e)
@@ -53,9 +53,9 @@ used in action computation
 """
 function Vrad(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
               u::Float64,a::Float64,e::Float64,
-              TOLECC::Float64=ELTOLECC)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
+              TOLA::Float64,TOLECC::Float64)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
-    E, L = ELFromAE(ψ,dψ,d2ψ,d3ψ,a,e,TOLECC)
+    E, L = ELFromAE(ψ,dψ,d2ψ,d3ψ,a,e,TOLA,TOLECC)
 
     r = ru(u,a,e)
 

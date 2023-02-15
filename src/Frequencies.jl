@@ -56,8 +56,8 @@ end
     FrequenciesDerivsFromαβDerivs(α,β,dα,dβ,Ω₀)
 """
 function FrequenciesDerivsFromαβDerivs(α::Float64,β::Float64,
-                                    dα::Float64,dβ::Float64,
-                                    Ω₀::Float64)::Tuple{Float64,Float64}
+                                       dα::Float64,dβ::Float64,
+                                       Ω₀::Float64)::Tuple{Float64,Float64}
 
     return Ω₀*dα, Ω₀*(dα*β + α*dβ)
 end
@@ -65,11 +65,12 @@ end
 
 """
     αβFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLA,TOLECC,NINT,EDGE,Ω₀)
+    αβFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
 """
 function αβFromAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
                   a::Float64,e::Float64,
                   TOLA::Float64,TOLECC::Float64,
-                  NINT::Int64,EDGE::Float64,Ω₀::Float64=1.0)::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
+                  NINT::Int64,EDGE::Float64,Ω₀::Float64)::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
     return αβHenonΘAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLA,TOLECC,NINT,EDGE,Ω₀)
 end
@@ -83,12 +84,13 @@ end
 
 
 """
-    ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLA,TOLECC,NINT,EDGE)
+    ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLA,TOLECC,NINT,EDGE,Ω₀)
+    ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
 """
 function ComputeFrequenciesAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
                               a::Float64,e::Float64,
                               TOLA::Float64,TOLECC::Float64,
-                              NINT::Int64,EDGE::Float64,Ω₀::Float64=1.0)::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
+                              NINT::Int64,EDGE::Float64,Ω₀::Float64)::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
     α,β = αβFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLA,TOLECC,NINT,EDGE,Ω₀)
     return FrequenciesFromαβ(α,β,Ω₀)
@@ -98,21 +100,21 @@ function ComputeFrequenciesAE(ψ::Function,dψ::Function,d2ψ::Function,d3ψ::Fu
                               a::Float64,e::Float64,
                               params::OrbitsParameters)::Tuple{Float64,Float64}
 
-    return ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params.TOLA,params.TOLECC,params.NINT,params.EDGE)
+    return ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params.TOLA,params.TOLECC,params.NINT,params.EDGE,params.Ω₀)
 end
 
 
 
 """
-    ComputeFrequenciesJAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLA,TOLECC,NINT,EDGE,TOLA)
+    ComputeFrequenciesJAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLA,TOLECC,NINT,EDGE,TOLA,Ω₀)
 """
 function ComputeFrequenciesJAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
                               a::Float64,e::Float64,
                               TOLA::Float64,TOLECC::Float64,
-                              NINT::Int64,EDGE::Float64,Ω₀::Float64=1.0)::Tuple{Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
+                              NINT::Int64,EDGE::Float64,Ω₀::Float64)::Tuple{Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
     Ω1, Ω2 = ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLA,TOLECC,NINT,EDGE,Ω₀)
-    J = HenonJFromAE(ψ,dψ,d2ψ,d3ψ,a,e,NINT,TOLECC)
+    J = HenonJFromAE(ψ,dψ,d2ψ,d3ψ,a,e,NINT,TOLA,TOLECC)
 
     return Ω1, Ω2, J
 end
@@ -132,7 +134,7 @@ function ComputeαβWithDerivAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
                               a::Float64,e::Float64,
                               da::Float64,de::Float64,
                               TOLA::Float64,TOLECC::Float64,
-                              NINT::Int64,EDGE::Float64,Ω₀::Float64=1.0)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
+                              NINT::Int64,EDGE::Float64,Ω₀::Float64)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
     # Numerical derivative points
     ap, da, ep, de = NumDerivPoints(a,e,da,de,TOLA,TOLECC)
@@ -170,7 +172,7 @@ function ComputeFrequenciesAEWithDeriv(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4
                                        a::Float64,e::Float64,
                                        da::Float64,de::Float64,
                                        TOLA::Float64,TOLECC::Float64,
-                                       NINT::Int64,EDGE::Float64,Ω₀::Float64=1.0)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
+                                       NINT::Int64,EDGE::Float64,Ω₀::Float64)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
     α, β, ∂α∂a, ∂β∂a, ∂α∂e, ∂β∂e = ComputeαβWithDerivAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,da,de,TOLA,TOLECC,NINT,EDGE,Ω₀)
 
@@ -197,7 +199,7 @@ function ComputeActionsAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
                           TOLA::Float64,TOLECC::Float64,
                           NINT::Int64)::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
-    J = HenonJFromAE(ψ,dψ,d2ψ,d3ψ,a,e,NINT,TOLECC)
+    J = HenonJFromAE(ψ,dψ,d2ψ,d3ψ,a,e,NINT,TOLA,TOLECC)
     L = LFromAE(ψ,dψ,d2ψ,d3ψ,a,e,TOLA,TOLECC)
     return J, L
 end
@@ -258,12 +260,13 @@ end
 """
 function ComputeAEFromFrequencies(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
                                   Ω1::Float64,Ω2::Float64,
-                                  ITERMAX::Int64=1000,
-                                  da::Float64=0.0001,de::Float64=0.0001,
-                                  TOLA::Float64=0.0001,TOLECC::Float64=ELTOLECC,EDGE::Float64=0.01,NINT::Int64=32,
-                                  rmin::Float64=1.e-6,rmax::Float64=1.e6,
-                                  invε::Float64=1.e-12,
-                                  Ω₀::Float64=1.0)::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
+                                  ITERMAX::Int64,
+                                  da::Float64,de::Float64,
+                                  TOLA::Float64,TOLECC::Float64,
+                                  EDGE::Float64,NINT::Int64,
+                                  rmin::Float64,rmax::Float64,
+                                  invε::Float64,
+                                  Ω₀::Float64)::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
         # @IMPROVE
         # use adaptive da, de branches
@@ -286,11 +289,12 @@ end
 """
 function ComputeAEFromActions(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
                               J::Float64,L::Float64,
-                              ITERMAX::Int64=1000,
-                              da::Float64=0.0001,de::Float64=0.0001,
-                              TOLA::Float64=0.0001,TOLECC::Float64=ELTOLECC,EDGE::Float64=0.01,NINT::Int64=32,
-                              rmin::Float64=1.e-6,rmax::Float64=1.e6,
-                              invε::Float64=1.e-12)::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
+                              ITERMAX::Int64,
+                              da::Float64,de::Float64,
+                              TOLA::Float64,TOLECC::Float64,
+                              EDGE::Float64,NINT::Int64,
+                              rmin::Float64,rmax::Float64,
+                              invε::Float64)::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
         # @IMPROVE
         # use adaptive da, de branches
@@ -316,8 +320,8 @@ compute the jacobian J = |d(E,L)/d(α,β)| = |d(E,L)/d(a,e)|/|d(α,β)/d(a,e)|
 """
 function JacELToαβAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
                      a::Float64,e::Float64,
-                     TOLA::Float64=ELTOLECC,TOLECC::Float64=ELTOLECC,
-                     NINT::Int64=64,EDGE::Float64=0.02,Ω₀::Float64=1.0)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
+                     TOLA::Float64,TOLECC::Float64,
+                     NINT::Int64,EDGE::Float64,Ω₀::Float64)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
     # the (E,L) -> (a,e) Jacobian (in Utils/ComputeEL.jl)
     JacELae = JacELToAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLA,TOLECC)
@@ -357,8 +361,8 @@ end
 
 """
 function JacαβToAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
-                   a::Float64,e::Float64;
-                   NINT::Int64=64,EDGE::Float64=0.02,Ω₀::Float64=1.0)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
+                   a::Float64,e::Float64,
+                   NINT::Int64,EDGE::Float64,Ω₀::Float64)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
     # calculate the frequency derivatives
     α,β,∂α∂a,∂α∂e,∂β∂a,∂β∂e = OrbitalElements.DHenonΘFreqRatiosAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,NINT=NINT,EDGE=EDGE,Ω₀=Ω₀)

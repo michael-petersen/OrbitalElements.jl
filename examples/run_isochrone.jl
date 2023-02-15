@@ -27,7 +27,7 @@ vc = n1*OrbitalElements.Ω1circular(dψ,d2ψ,x) + n2*OrbitalElements.Ω2circular
 println(vc)
 
 # select an (a,e) value for the orbit
-a,e = 0.05, 1.0
+a,e = 0.05, 0.5
 
 # compute rperi and rapo
 rp,ra = OrbitalElements.RpRaFromAE(a,e)
@@ -47,7 +47,7 @@ Jrr = OrbitalElements.IsochroneJrRpRa(rp,ra,bc,M,G)
 println("truth Ω₁=$Ω₁e,Ω₂=$Ω₂e")
 
 # make a HIGH RES version of the frequencies
-Ω₁r,Ω₂r = OrbitalElements.ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLA,TOLECC,NINT,EDGE)
+Ω₁r,Ω₂r = OrbitalElements.ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLA,TOLECC,NINT,EDGE,Ω₀)
 println("oldae O1=$Ω₁r O2=$Ω₂r")
 
 @time Ec,Lc,dEda,dEde,dLda,dLde = OrbitalElements.dELFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLA,TOLECC)

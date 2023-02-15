@@ -60,7 +60,7 @@ energy as a function of (a,e) for a given potential ψ (and its derivatives)
 """
 function EFromAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
                  a::Float64,e::Float64,
-                 TOLA::Float64=ELTOLECC,TOLECC::Float64=ELTOLECC)::Float64 where {F0  <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
+                 TOLA::Float64,TOLECC::Float64)::Float64 where {F0  <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
     tole = EccentricityTolerance(a,TOLA,TOLECC)
     if e <= tole
@@ -74,6 +74,13 @@ function EFromAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
     end
 end
 
+function EFromAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
+                 a::Float64,e::Float64,
+                 params::OrbitsParameters)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
+
+    return EFromAE(ψ,dψ,d2ψ,d3ψ,a,e,params.TOLA,params.TOLECC)
+end
+
 """
     LFromAE(ψ,dψ,d2ψ,d3ψ,a,e,TOLA,TOLECC)
 
@@ -81,7 +88,7 @@ angular momentum as a function of (a,e) for a given potenial ψ (and its derivat
 """
 function LFromAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
                  a::Float64,e::Float64,
-                 TOLA::Float64=ELTOLECC,TOLECC::Float64=ELTOLECC)::Float64 where {F0  <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
+                 TOLA::Float64,TOLECC::Float64)::Float64 where {F0  <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
     tole = EccentricityTolerance(a,TOLA,TOLECC)
     if e <= tole
@@ -95,6 +102,14 @@ function LFromAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
     end
 end
 
+function LFromAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
+                 a::Float64,e::Float64,
+                 params::OrbitsParameters)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
+
+    return LFromAE(ψ,dψ,d2ψ,d3ψ,a,e,params.TOLA,params.TOLECC)
+
+end
+
 """
     ELFromAE(ψ,dψ,d2ψ,d3ψ,a,e,TOLA,TOLECC)
 
@@ -102,7 +117,7 @@ combined energy + angular momentum as a function of (a,e) for a given potenial �
 """
 function ELFromAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
                   a::Float64,e::Float64,
-                  TOLA::Float64=ELTOLECC,TOLECC::Float64=ELTOLECC)::Tuple{Float64,Float64} where {F0  <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
+                  TOLA::Float64,TOLECC::Float64)::Tuple{Float64,Float64} where {F0  <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
 
     tole = EccentricityTolerance(a,TOLA,TOLECC)
@@ -117,6 +132,13 @@ function ELFromAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
     end
 
     #return E, L
+end
+
+function ELFromAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
+                  a::Float64,e::Float64,
+                  params::OrbitsParameters)::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
+
+    return ELFromAE(ψ,dψ,d2ψ,d3ψ,a,e,params.TOLA,params.TOLECC)
 end
 
 ########################################################################
@@ -214,7 +236,7 @@ energy and angular momentum derivatives w.r.t. (a,e)
 """
 function dELFromAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
                    a::Float64,e::Float64,
-                   TOLA::Float64=ELTOLECC,TOLECC::Float64=ELTOLECC)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
+                   TOLA::Float64,TOLECC::Float64)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
     E, L = ELFromAE(ψ,dψ,d2ψ,d3ψ,a,e,TOLA,TOLECC)
 
@@ -253,6 +275,12 @@ function dELFromAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
     end
 end
 
+function dELFromAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
+                   a::Float64,e::Float64,
+                   params::OrbitsParameters)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
+
+    return dELFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params.TOLA,params.TOLECC)
+end
 
 """
     dELcircExpansion(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e)
@@ -288,12 +316,19 @@ the Jacobian to convert between variables that are functions of (E,L) and (a,e)
 """
 function JacELToAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
                    a::Float64,e::Float64,
-                   TOLA::Float64,TOLECC::Float64=ELTOLECC)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
+                   TOLA::Float64,TOLECC::Float64)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
 
     _, _, ∂E∂a, ∂L∂a, ∂E∂e, ∂L∂e = dELFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLA,TOLECC)
 
     return abs(∂E∂a*∂L∂e - ∂L∂a*∂E∂e)
+end
+
+function JacELToAE(ψ::Function,dψ::Function,d2ψ::Function,d3ψ::Function,d4ψ::Function,
+                   a::Float64,e::Float64,
+                   params::OrbitsParameters)::Float64
+
+    return JacELToAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params.TOLA,params.TOLECC)
 end
 
 """
@@ -302,11 +337,18 @@ energy as a function of (rp,ra) for a given potential ψ (and its derivatives)
 """
 function EFromRpRa(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
                    rp::Float64,ra::Float64,
-                   TOLA::Float64,TOLECC::Float64=ELTOLECC)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
+                   TOLA::Float64,TOLECC::Float64)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
     a,e = AEFromRpRa(rp,ra)
 
-    return EFromAE(ψ,dψ,d2ψ,d3ψ,a,e,TOLECC=ELTOLECC)
+    return EFromAE(ψ,dψ,d2ψ,d3ψ,a,e,TOLECC)
+end
+
+function EFromRpRa(ψ::Function,dψ::Function,d2ψ::Function,d3ψ::Function,
+                   rp::Float64,ra::Float64,
+                   params::OrbitsParameters)::Float64
+
+    return EFromRpRa(ψ,dψ,d2ψ,d3ψ,rp,ra,params.TOLA,params.TOLECC)
 end
 
 """
@@ -316,11 +358,18 @@ angular momentum as a function of (rp,ra) for a given potential ψ (and its deri
 """
 function LFromRpRa(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
                    rp::Float64,ra::Float64,
-                   TOLA::Float64,TOLECC::Float64=ELTOLECC)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
+                   TOLA::Float64,TOLECC::Float64)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
     a,e = AEFromRpRa(rp,ra)
 
     return LFromAE(ψ,dψ,d2ψ,d3ψ,a,e,TOLECC)
+end
+
+function LFromRpRa(ψ::Function,dψ::Function,d2ψ::Function,d3ψ::Function,
+                   rp::Float64,ra::Float64,
+                   params::OrbitsParameters)::Float64
+
+    return LFromRpRa(ψ,dψ,d2ψ,d3ψ,rp,ra,params.TOLA,params.TOLECC)
 end
 
 """
@@ -330,7 +379,7 @@ combined energy + angular momentum as a function of (rp,ra) for a given potenial
 """
 function ELFromRpRa(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
                     rp::Float64,ra::Float64,
-                    TOLA::Float64,TOLECC::Float64=ELTOLECC)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
+                    TOLA::Float64,TOLECC::Float64)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
     a,e = AEFromRpRa(rp,ra)
 
@@ -338,6 +387,13 @@ function ELFromRpRa(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
     L = LFromAE(ψ,dψ,d2ψ,d3ψ,a,e,TOLA,TOLECC)
 
     return E, L
+end
+
+function ELFromRpRa(ψ::Function,dψ::Function,d2ψ::Function,d3ψ::Function,
+                    rp::Float64,ra::Float64,
+                    params::OrbitsParameters)::Float64
+
+    return ELFromRpRa(ψ,dψ,d2ψ,d3ψ,rp,ra,params.TOLA,params.TOLECC)
 end
 
 
