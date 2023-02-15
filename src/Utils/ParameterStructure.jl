@@ -26,7 +26,9 @@ struct OrbitsParameters
     invε::Float64
 end
 
-
+"""
+    OrbitsParametersCreate(dψ,d2ψ,Ω₀;rmin,rmax,EDGE,TOLECC,TOLA,NINT,FDIFF,da,de,ITERMAX,invε)
+"""
 function OrbitsParametersCreate(dψ::Function,d2ψ::Function,Ω₀::Float64;
                                 rmin::Float64=1.e-5,rmax::Float64=1.e5,
                                 EDGE::Float64=0.01,TOLECC::Float64=0.001,TOLA::Float64=1.0,

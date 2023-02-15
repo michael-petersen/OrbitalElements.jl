@@ -110,3 +110,6 @@ If one wanted to write a new frequency anomaly, this is the template to use.
 - RpRaFromAE(a,e)
 - Ecirc(ψ,dψ,r)
 - Vrad(ψ,dψ,d2ψ,d3ψ,u,a,e,TOLA,TOLECC)
+
+### Utils/ParameterStructure.jl:
+- OrbitsParametersCreate(dψ,d2ψ,Ω₀;rmin,rmax,EDGE,TOLECC,TOLA,NINT,FDIFF,da,de,ITERMAX,invε)
