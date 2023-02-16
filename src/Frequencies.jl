@@ -256,7 +256,7 @@ end
 
 
 """
-    ComputeAEFromFrequencies(ψ,dψ,d2ψ,d3ψ,d4ψ,Ω1,Ω2,ITERMAX,da,de,TOLA,TOLECC,rmin,rmax,invε,Ω₀)
+    ComputeAEFromFrequencies(ψ,dψ,d2ψ,d3ψ,d4ψ,Ω1,Ω2,ITERMAX,da,de,TOLA,TOLECC,EDGE,NINT,rmin,rmax,invε,Ω₀)
 """
 function ComputeAEFromFrequencies(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
                                   Ω1::Float64,Ω2::Float64,
@@ -277,15 +277,15 @@ function ComputeAEFromFrequencies(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
         return a,e
 end
 
-function ComputeAEFromFrequencies(ψ::Function,dψ::Function,d2ψ::Function,d3ψ::Function,d4ψ::Function,
+function ComputeAEFromFrequencies(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
                                   Ω1::Float64,Ω2::Float64,
-                                  params::OrbitsParameters)::Tuple{Float64,Float64}
+                                  params::OrbitsParameters)::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
-        return ComputeAEFromFrequencies(ψ,dψ,d2ψ,d3ψ,d4ψ,Ω1,Ω2,params.ITERMAX,params.da,params.de,params.TOLA,params.TOLECC,params.rmin,params.rmax,params.invε,params.Ω₀)
+        return ComputeAEFromFrequencies(ψ,dψ,d2ψ,d3ψ,d4ψ,Ω1,Ω2,params.ITERMAX,params.da,params.de,params.TOLA,params.TOLECC,params.EDGE,params.NINT,params.rmin,params.rmax,params.invε,params.Ω₀)
 end
 
 """
-    ComputeAEFromActions(ψ,dψ,d2ψ,d3ψ,d4ψ,J,L,ITERMAX,da,de,TOLA,TOLECC,rmin,rmax,invε)
+    ComputeAEFromActions(ψ,dψ,d2ψ,d3ψ,d4ψ,J,L,ITERMAX,da,de,TOLA,TOLECC,EDGE,NINT,rmin,rmax,invε)
 """
 function ComputeAEFromActions(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
                               J::Float64,L::Float64,
@@ -305,21 +305,22 @@ function ComputeAEFromActions(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
         return a,e
 end
 
-function ComputeAEFromActions(ψ::Function,dψ::Function,d2ψ::Function,d3ψ::Function,d4ψ::Function,
+function ComputeAEFromActions(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
                               J::Float64,L::Float64,
-                              params::OrbitsParameters)::Tuple{Float64,Float64}
+                              params::OrbitsParameters)::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
-        return ComputeAEFromActions(ψ,dψ,d2ψ,d3ψ,d4ψ,J,L,params.ITERMAX,params.da,params.de,params.TOLA,params.TOLECC,params.rmin,params.rmax,params.invε)
+        return ComputeAEFromActions(ψ,dψ,d2ψ,d3ψ,d4ψ,J,L,params.ITERMAX,params.da,params.de,params.TOLA,params.TOLECC,params.EDGE,params.NINT,params.rmin,params.rmax,params.invε)
 end
 
 
 """
-    JacELToαβAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLA,TOLECC,NINT,EDGE,Ω₀)
+    JacELToαβAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,da,de,TOLA,TOLECC,NINT,EDGE,Ω₀)
 
 compute the jacobian J = |d(E,L)/d(α,β)| = |d(E,L)/d(a,e)|/|d(α,β)/d(a,e)|
 """
 function JacELToαβAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
                      a::Float64,e::Float64,
+                     da::Float64,de::Float64,
                      TOLA::Float64,TOLECC::Float64,
                      NINT::Int64,EDGE::Float64,Ω₀::Float64)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
@@ -327,7 +328,7 @@ function JacELToαβAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
     JacELae = JacELToAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLA,TOLECC)
 
     # the (α,β) -> (a,e) Jacobian (below)
-    Jacαβae = JacαβToAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,NINT,EDGE,TOLA)
+    Jacαβae = JacαβToAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,da,de,TOLA,TOLECC,NINT,EDGE,Ω₀)
 
     # compute the Jacobian
     Jac = JacELae/Jacαβae
@@ -347,35 +348,37 @@ function JacELToαβAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
 
 end
 
-function JacELToαβAE(ψ::Function,dψ::Function,d2ψ::Function,d3ψ::Function,d4ψ::Function,
+function JacELToαβAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
                      a::Float64,e::Float64,
-                     params::OrbitsParameters)::Float64
+                     params::OrbitsParameters)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
-    return JacELToαβAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params.TOLA,params.TOLECC,params.NINT,params.EDGE,params.Ω₀)
+    return JacELToαβAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params.da,params.de,params.TOLA,params.TOLECC,params.NINT,params.EDGE,params.Ω₀)
 end
 
 
 
 """
-    JacαβToAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,NINT,EDGE,TOLA)
+    JacαβToAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,da,de,TOLA,TOLECC,NINT,EDGE,Ω₀)
 
 """
 function JacαβToAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
                    a::Float64,e::Float64,
+                   da::Float64,de::Float64,
+                   TOLA::Float64,TOLECC::Float64,
                    NINT::Int64,EDGE::Float64,Ω₀::Float64)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
     # calculate the frequency derivatives
-    α,β,∂α∂a,∂α∂e,∂β∂a,∂β∂e = OrbitalElements.DHenonΘFreqRatiosAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,NINT=NINT,EDGE=EDGE,Ω₀=Ω₀)
+    α,β,∂α∂a,∂α∂e,∂β∂a,∂β∂e = OrbitalElements.ComputeαβWithDerivAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,da,de,TOLA,TOLECC,NINT,EDGE,Ω₀)
 
     # return the Jacobian
     Jacαβae = abs(∂α∂a*∂β∂e - ∂β∂a*∂α∂e)
 
 end
 
-function JacαβToAE(ψ::Function,dψ::Function,d2ψ::Function,d3ψ::Function,d4ψ::Function,
+function JacαβToAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
                    a::Float64,e::Float64,
-                   params::OrbitsParameters)::Float64
+                   params::OrbitsParameters)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
     # return the Jacobian
-    return JacαβToAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params.NINT,params.EDGE,params.TOLA)
+    return JacαβToAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params.da,params.de,params.TOLA,params.TOLECC,params.NINT,params.EDGE,params.Ω₀)
 end

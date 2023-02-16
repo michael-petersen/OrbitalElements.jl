@@ -214,6 +214,12 @@ function βcirc(αcirc::Float64,
     return Ω2/Ω1
 end
 
+function βcirc(αcirc::Float64,
+               dψ::Function,d2ψ::Function,
+               params::OrbitsParameters)::Float64
+
+    return βcirc(αcirc,dψ,d2ψ,params.Ω₀,params.rmin,params.rmax)
+end
 
 ########################################################################
 #

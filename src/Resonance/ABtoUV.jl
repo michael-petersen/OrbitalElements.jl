@@ -61,5 +61,7 @@ using the definitions for (α, β) and (u,v), compute the Jacobian.
 """
 function JacαβToUV(n1::Int64,n2::Int64,ωmin::Float64,ωmax::Float64,v::Float64)::Float64
 
+    # we don't really need ωmin, ωmax here?
+
     return (n2==0) ? 1.0 / abs(n1) : 1.0 / abs(n2*v)
 end
