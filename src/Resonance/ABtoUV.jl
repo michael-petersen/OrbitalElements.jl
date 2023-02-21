@@ -59,7 +59,7 @@ using the definitions for (α, β) and (u,v), compute the Jacobian.
 @ATTENTION, to match eq. B6, this has the 2/(ωmax-ωmin) term already absorbed into it. therefore, not formally the Jacobian, but adds the dimensional removal.
 @ATTENTION, hypothesis ωmin < ωmax
 """
-function JacαβToUV(n1::Int64,n2::Int64,ωmin::Float64,ωmax::Float64,v::Float64)::Float64
+function JacαβToUV(n1::Int64,n2::Int64,v::Float64)::Float64
 
     # we don't really need ωmin, ωmax here?
 

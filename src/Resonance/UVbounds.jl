@@ -94,11 +94,9 @@ maximal and minimal considered radial frequencies (rescaled)
 @ASSUMPTION:
     - Ω1circular is a decreasing function of radius
 """
-function αminmax(dψ::Function,
-                 d2ψ::Function,
-                 rmin::Float64,
-                 rmax::Float64,
-                 Ω₀::Float64)
+function αminmax(dψ::F1,d2ψ::F2,
+                 rmin::Float64,rmax::Float64,
+                 Ω₀::Float64)::Tuple{Float64,Float64} where {F1 <: Function, F2 <: Function}
 
     @assert rmin < rmax "rmin >= rmax in αminmax function"
     # Assumption :

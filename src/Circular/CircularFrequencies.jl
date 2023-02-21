@@ -41,7 +41,7 @@ end
 radial frequency for nearly circular orbits, from Taylor expansion
 """
 function Ω1circular(dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
-                     a::Float64,e::Float64)::Float64 where {F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
+                    a::Float64,e::Float64)::Float64 where {F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
     # start with the epicylic approximation
     Ω1c = Ω1circular(dψ,d2ψ,a)
